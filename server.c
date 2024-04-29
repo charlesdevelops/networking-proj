@@ -1,6 +1,6 @@
 /*
-** server.c -- a stream socket server demo
-*/
+ ** server.c -- a stream socket server demo
+ */
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -15,9 +15,10 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "response_http.h"
 
-#define PORT "3490" // adjustable
-#define MAXDATASIZE 100 // max 100 per send.
+#define PORT "4003" // adjustable
+#define MAXDATASIZE 200 // max 100 per send.
 #define BACKLOG 10 // number of pending connections.
 
 void sigchld_handle(int s)
@@ -35,7 +36,7 @@ void *get_in_addr(struct sockaddr *sa){
   if ( sa->sa_family == AF_INET) {
     return &(((struct sockaddr_in*)sa)->sin_addr); // convert to IPv4 sockaddr_in
   }
-  
+
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
@@ -47,7 +48,7 @@ int main(void)
   socklen_t sin_size;
   struct sigaction sa;
   char s[INET6_ADDRSTRLEN];
-  char query[MAXDATASIZE];
+  char query[MAXDATASIZE], *response;
   int rv;
 
   memset(&hints, 0, sizeof hints);
@@ -56,21 +57,34 @@ int main(void)
   hints.ai_flags = AI_PASSIVE;
 
   // error handler —getaddrinfo()
+
   if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
     fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
+    return 1;
   } 
 
   p = servinfo;
-  if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-    perror("server: socket");
-    exit(EXIT_FAILURE);
-  }
+  for(p = servinfo; p != NULL; p=servinfo->ai_next){
+    if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("server: socket");
+      exit(EXIT_FAILURE);
+    }
 
-  if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1){
-    close(sockfd);
-    perror("server: bind");
-    exit(EXIT_FAILURE);
+    int yes=1;
+    //char yes='1'; // Solaris people use this
+
+    // lose the pesky "Address already in use" error message
+    if (setsockopt(sockfd ,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof yes) == -1) {
+      perror("setsockopt");
+      exit(1);
+    } 
+    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1){
+      close(sockfd);
+      perror("server: bind");
+      exit(EXIT_FAILURE);
+    }
+
+    break;
   }
 
   freeaddrinfo(servinfo); // no need with the rest
@@ -100,15 +114,22 @@ int main(void)
 
     inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *) &their_addr), s, sizeof s);
     printf("server: got connection from %s\n", s);
-    
-    if (!fork()) {
-      close(sockfd);
-      // do any to the child, assuming child should be waiting for response.
-      if (recv(new_fd, query, MAXDATASIZE, 0) > 0) printf("query received: %s\n", query);
-      printf("server: processing the query");
-      close(new_fd);
-      exit(0);
-    }
+
+    if (recv(new_fd, query, MAXDATASIZE, 0) <= 0){
+        perror("recv");
+        break;
+    } printf("Received:\n\n%s\n", query);
+
+    response = calloc((strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + 5), sizeof(char));
+
+    if (response == NULL) perror("calloc");
+    sprintf(response, "%s\r\n%s", HTTP_200_RESPONSE,HTML_200_MESSAGE);
+    if (send(new_fd, response, strlen(response), 0) == -1) {
+        perror("send");
+        exit(EXIT_FAILURE);
+    };
+
+    printf("connection %d in the main while has been closed\n", new_fd);
     close(new_fd);
   }
   return 0;
