@@ -26,6 +26,7 @@ def response_html():
 </head>
 <body>
     <h1>Hello, World!</h1>
+    <p>Served via Python <3</p>
 </body>
 </html>
 """
