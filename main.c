@@ -12,11 +12,13 @@
 int main(void)
 {
   int TCP_fd, UDP_fd;
-  
+
   setup_TCP(&TCP_fd, TCP_port);
   setup_UDP(&UDP_fd, UDP_port);
-  if(!fork()){
-    while(1) { // main accept() loop
+  if (!fork())
+  {
+    while (1)
+    { // main accept() loop
       // the service_TCP function, need to be broken down?
       service_TCP(TCP_fd);
 
@@ -25,12 +27,15 @@ int main(void)
       make a sendto() to another station server based on the query, this way some modification on service_TCP have to be done.
       */
     }
-  } else {
-    while(1) {
+  }
+  else
+  {
+    while (1)
+    {
       // the service_UDP function, need to be broken down?
       service_UDP(UDP_fd);
 
-      /* 
+      /*
       make a choice whether to sendto() to another station server
       (
         need to have struct identity, for it to have char **neighbours, and its own char *name.
