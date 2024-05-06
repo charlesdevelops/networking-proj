@@ -15,12 +15,12 @@
 #include <signal.h>
 #endif
 
-#define MAXDATASIZE 200 // max 200 per send.
+#define MAXDATASIZE 1024 // max 200 per send.
 
 struct addrinfo *getAddrInfo(char *port);
 
 void *get_in_addr(struct sockaddr *sa);
 
-void service_TCP(int sockfd);
+int new_connection(int sockfd);
 
 void setup_TCP(int *sockfd, char *TCP_PORT);

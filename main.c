@@ -12,39 +12,62 @@
 int main(void)
 {
   int TCP_fd, UDP_fd;
+  fd_set master; // master file descriptor list
+  fd_set read_fds;
+  int fdmax; // max fd number
+  int i, j; // reserved for "for loop"
+  char query[MAXDATASIZE];
+  char *response;
+  FD_ZERO(&master);
+  FD_ZERO(&read_fds);
 
   setup_TCP(&TCP_fd, TCP_port);
+  FD_SET(TCP_fd, &master);
   setup_UDP(&UDP_fd, UDP_port);
-  if (!fork())
-  {
-    while (1)
-    { // main accept() loop
-      // the service_TCP function, need to be broken down?
-      service_TCP(TCP_fd);
-
-      /*
-      service_TCP has to be broken down, since I'm sending a "trivial" http response whenever there is a connection made to the TCP_PORT.
-      make a sendto() to another station server based on the query, this way some modification on service_TCP have to be done.
-      */
+  FD_SET(UDP_fd, &master);
+  fdmax = TCP_fd;
+  while(1) {
+    read_fds = master;
+    if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1){
+      perror("select");
+      exit(4);
     }
-  }
-  else
-  {
-    while (1)
-    {
-      // the service_UDP function, need to be broken down?
-      service_UDP(UDP_fd);
+  printf("LOOP");
+    for(i = 0; i <= fdmax; i++){
+      if (FD_ISSET(i, &read_fds)) {
+        if (i == TCP_fd) {
+          // handles client web connection (TCP)
+          int new_fd = new_connection(TCP_fd);
+          FD_SET(new_fd, &master);
+          if (new_fd > fdmax) {
+            fdmax = new_fd;
+          }
+         
+          if(recv(new_fd, query, MAXDATASIZE, 0) <= 0){
+            perror("recv");
+            exit(1);
+          } printf("%s", query);
 
-      /*
-      make a choice whether to sendto() to another station server
-      (
-        need to have struct identity, for it to have char **neighbours, and its own char *name.
-        there should be some protocol created to check the inside package, specifically checking on a line (based on the implementation) whether the neighbour has already gotten the packet before.
-      )
-      OR
-      the if UDP packet is the awaited answer to the client webbrowser, then do TCP send() to the browser.
-      Hence, there should be some packet inspection that check whether the packet that arrived is the answer to the TCP connection.
-      */
+          char destination[61];
+          sscanf(query, "GET /?to=%s HTTP/1.1\n", destination);
+        
+          response = calloc((strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + strlen(destination) + 6), sizeof(char));
+
+          if (response == NULL) perror("calloc");
+          sprintf(response, "%s\r\n%s\n%s",HTTP_200_RESPONSE,HTML_200_MESSAGE, destination);
+          if (send(new_fd, response, strlen(response), 0) == -1) {
+              perror("send");
+              exit(EXIT_FAILURE);
+          }
+        } else if(i == UDP_fd) {
+          // handles data from stations. (UDP)
+          service_UDP(UDP_fd);
+        }
+        else {
+          recv(i, query, MAXDATASIZE, 0);
+          printf("Data from connections\n");
+        }
+      }
     }
   }
   return 0;

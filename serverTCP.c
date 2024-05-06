@@ -25,39 +25,24 @@ void *get_in_addr(struct sockaddr *sa){
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-void service_TCP(int sockfd){
+int new_connection(int sockfd){
   int new_fd;
   struct sockaddr_storage client_addr;
   socklen_t sin_size;
-  char query[MAXDATASIZE], *response;
+  char *response;
   char s[INET6_ADDRSTRLEN];
 
   sin_size = sizeof client_addr;
     new_fd = accept(sockfd, (struct sockaddr *) &client_addr, &sin_size);
     if (new_fd == -1) {
       perror("accept");
-      return;
+      return -1;
     }
 
     inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
-    printf("server: got connection from %s\n", s);
+    printf("server: new connection from %s on socket %d\n", s, new_fd);
 
-    if (recv(new_fd, query, MAXDATASIZE, 0) <= 0){
-        perror("recv");
-        return;
-    } printf("Received:\n\n%s\n", query);
-
-    response = calloc((strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + 5), sizeof(char));
-
-    if (response == NULL) perror("calloc");
-    sprintf(response, "%s\r\n%s", HTTP_200_RESPONSE,HTML_200_MESSAGE);
-    if (send(new_fd, response, strlen(response), 0) == -1) {
-        perror("send");
-        exit(EXIT_FAILURE);
-    };
-
-    printf("connection %d in the main while has been closed\n", new_fd);
-    close(new_fd);
+    return new_fd;
 };
 
 
