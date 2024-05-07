@@ -29,3 +29,12 @@ Content-Type: text/html; charset=iso-8859-1\r\n"
 </body>\r\n\
 </html>\r\n"
 
+
+// response = calloc((strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + strlen(destination) + 6), sizeof(char));
+
+          // if (response == NULL) perror("calloc");
+          // sprintf(response, "%s\r\n%s\n%s",HTTP_200_RESPONSE,HTML_200_MESSAGE, destination);
+          // if (send(new_fd, response, strlen(response), 0) == -1) {
+          //     perror("send");
+          //     exit(EXIT_FAILURE);
+          // 

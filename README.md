@@ -20,5 +20,8 @@ to clean:
 make clean
 ```
 
-to talk to UDP, ``telnet localhost UDP_PORT``.
 get to your web browser, go to ``localhost:PORT``.
+After make, a ``station-server`` executable will show up, this is our station-server in c
+example: `` ./station-server BusportB 4008 4010 localhost:4012 localhost:4020``
+
+to talk to TCP, ``cd talker`` and use ``./talker``

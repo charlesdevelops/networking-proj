@@ -1,11 +1,11 @@
 CC = cc
 CFLAGS = -Wall -Wextra
-TARGET = program
-SRC_DIR = .
+TARGET = station-server
+SRC_DIR = . server timetable
 BUILD_DIR = build
 
 # List of source files
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+SRCS = $(foreach dir,$(SRC_DIR),$(wildcard $(dir)/*.c))
 
 # List of object files
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)

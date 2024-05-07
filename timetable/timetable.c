@@ -59,3 +59,40 @@ int readtimetable(char *timetable, STATION *Station, TIMETABLE **Station_Timetab
 
   return count;
 }
+
+int readneighbours(int argc, char **argv, NEIGHBOURS **neighbours){
+  int count = 0;
+  int size = 1;
+  *neighbours = (NEIGHBOURS *) malloc(size * sizeof(NEIGHBOURS));
+  if(*neighbours == NULL) {
+    perror("malloc");
+    exit(1);
+  }
+  for(int i = 4; i < argc; i++){
+    sscanf(argv[i], "%60[^:]:%s", (*neighbours)[count].ip_addr, (*neighbours)[count].udp_port);
+    count++;
+    if(size == count){
+      size *= 2;
+      NEIGHBOURS *temp = (NEIGHBOURS *) realloc(*neighbours, size * sizeof(NEIGHBOURS));
+      if(temp == NULL) {
+        fprintf(stderr, "Memory realloc()ation failed.\n");
+        exit(1);
+      }
+      (*neighbours) = temp;
+    }
+  }
+  return count;
+}
+
+void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES){
+  for(int i = 0; i < NUM_TIMETABLES; i++){
+    // departure-time,route-name,departing-from,arrival-time,arrival-station
+    printf("%s, %s, %s, %s, %s\n", timetable[i].departure_time, timetable[i].route_name, timetable[i].departing_from, timetable[i].arrival_time, timetable[i].arrival_station);
+  }
+}
+
+void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS){
+  for(int i = 0; i < NUM_NEIGHBOURS; i++){
+    printf("%s:%s\n", neighbours[i].ip_addr, neighbours[i].udp_port);
+  }
+}
