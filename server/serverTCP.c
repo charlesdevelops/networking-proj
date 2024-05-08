@@ -40,7 +40,7 @@ int new_connection(int sockfd){
     }
 
     inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
-    printf("server: new connection from %s on socket %d\n", s, new_fd);
+    printf("server: new connection from %s on new connection %d\n", s, new_fd);
 
     return new_fd;
 };

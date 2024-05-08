@@ -73,12 +73,11 @@ int main(int argc, char **argv)
 
       char destination[61];
       sscanf(query, "GET /?to=%s HTTP/1.1\n", destination);
-      char payload[MAXDATASIZE];
-      strcpy(payload, "");
-      sprintf(payload, "%s", destination);
-      payload[strlen(destination)] = '\0';
+      /*
+        The crafting of the first payload here.
+      */
       for(i = 0; i < NUM_NEIGHBOURS; i++){
-        talk_to(Neighbours[i].ip_addr, Neighbours[i].udp_port, payload);
+        talk_to(Neighbours[i].ip_addr, Neighbours[i].udp_port, destination);
       }
     }
     if(FD_ISSET(UDP_fd, &read_fds)){
@@ -90,8 +89,14 @@ int main(int argc, char **argv)
           perror("recvfrom");
           exit(EXIT_FAILURE);
       }
+
+      /*
+        The crafting of the intermediate payload is here.
+      */
       // Process received UDP data here
-        printf("Received UDP data: %s\n", buffer);
+      buffer[num_bytes] = '\0'; // IMPORTANT
+
+      printf("Received UDP data: %s\n", buffer);
     }
   }
   return 0;

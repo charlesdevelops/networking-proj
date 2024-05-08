@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.py": "python",
+    "payload.h": "c",
+    "timetable.h": "c",
+    "string.h": "c"
+  }
+}
