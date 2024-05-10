@@ -109,7 +109,7 @@ description: "<found or not> <number routes> <stations_name based on number rout
       sprintf(address[0], "localhost:%s", UDP_port);
 
       // PUT IN PAYLOAD
-      p.found = 0; p.hops = 1; // not found, first hop.
+      p.found = 0; p.hops = 1; p.current = 1; // not found, first hop, on first station (using 1-indexing);
       strcpy(p.time, time);
       strcpy(p.source, Station.station_name);
       strcpy(p.destination, destination);
@@ -140,27 +140,45 @@ description: "<found or not> <number routes> <stations_name based on number rout
 
       PAYLOAD received_payload;  
       load_payload(&received_payload, buffer);
-
-      
-      if(received_payload.found){
-        if(!strcmp(received_payload.source, Station.station_name)){
-          printf("Got the answers!");
-        }
-        // else {
-        //   for(int j = 0; j < received_payload.hops; j++){
-        //     if(!strcmp(received_payload.source, Station.station_name)){
-        //       printf("In progress");
-        //     }
-        //   }
-        // }
-      }
-      else {
+      if(!strcmp(received_payload.destination, Station.station_name)){
+        received_payload.found = 1;
         int hops = received_payload.hops;
         received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
         received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
         sprintf(received_payload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
         strcpy(received_payload.routes[hops], Station.station_name);
         received_payload.hops++;
+        received_payload.current = received_payload.hops;
+      }
+
+
+      
+      if(received_payload.found){
+        if(!strcmp(received_payload.source, Station.station_name)){
+          printf("Got the answers!");
+          // send answer to client browser.
+        }
+        // BACKTRACE! definitely a neighbour.
+        printf("BACKTRACE!\n");
+        char ip_target[INET6_ADDRSTRLEN];
+        char port_target[MAX_PORT];
+        int current =  --received_payload.current;
+        sscanf(received_payload.address[current-1], "%45[^:]:%s", ip_target, port_target);
+        printf("%s\n", received_payload.address[current-1]);
+        char *payload_tosend = craft_payload(received_payload);
+        printf("payload to send %s\n", payload_tosend);
+        printf("Port_Target %s\n", ip_target);
+        talk_to(ip_target, port_target, payload_tosend);
+      }
+      else {
+        printf("not found yet\n");
+        int hops = received_payload.hops;
+        received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
+        received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
+        sprintf(received_payload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
+        strcpy(received_payload.routes[hops], Station.station_name);
+        received_payload.hops++;
+        received_payload.current = received_payload.hops;
 
         for(int j = 0; j < NUM_NEIGHBOURS; j++){
           int been_there = 0;

@@ -3,7 +3,7 @@
 char* craft_payload(PAYLOAD p) {
     // This is the oversized malloc()ed payload, with this being able to support dynamically long payload of any size. 
     char* payload = (char*)malloc((p.hops * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_TIMESTRING) + 2 * MAX_NAME_LENGTH) * sizeof(char));
-    sprintf(payload, "%d %d", p.found, p.hops);
+    sprintf(payload, "%d %d %d", p.found, p.hops, p.current);
     for (int i = 0; i < p.hops; i++) {
         strcat(payload, " ");
         strcat(payload, p.routes[i]);
@@ -26,7 +26,7 @@ char* craft_payload(PAYLOAD p) {
 void load_payload(PAYLOAD *payload_struct, char* payload_string) {
     char* token;
     char* payload_copy = strdup(payload_string); // Create a copy to avoid modifying original string
-    sscanf(payload_copy, "%d %d", &payload_struct->found, &payload_struct->hops);
+    sscanf(payload_copy, "%d %d %d", &payload_struct->found, &payload_struct->hops, &payload_struct->current);
 
     if (payload_struct->found == 0) {
         // Routes not found, allocate memory for routes based on hops + 1, current station to be added.
@@ -43,6 +43,7 @@ void load_payload(PAYLOAD *payload_struct, char* payload_string) {
     }
 
     token = strtok(payload_copy, " ");
+    token = strtok(NULL, " ");
     token = strtok(NULL, " ");
     for (int i = 0; i < payload_struct->hops; i++) {
         token = strtok(NULL, " ");
@@ -67,7 +68,8 @@ void load_payload(PAYLOAD *payload_struct, char* payload_string) {
 void print_payload(PAYLOAD payload_struct){
 
     // Accessing payload struct attributes
-    printf("Found routes: %d\n", payload_struct.found);
+    printf("Found: %d\n", payload_struct.found);
+    printf("Current: %d\n", payload_struct.current);
     printf("Number of routes traversed: %d\n", payload_struct.hops);
     printf("Stations: ");
     for (int i = 0; i < payload_struct.hops; i++) {
@@ -80,7 +82,7 @@ void print_payload(PAYLOAD payload_struct){
 }
 // int main() {
 //     PAYLOAD payload_struct;
-//     char payload_string[] = "0 3 StationA StationB StationC localhost:1002 localhost:1003 localhost:1004 10:45 StationX StationA;";
+//     char payload_string[] = "0 3 3 StationA StationB StationC localhost:1002 localhost:1003 localhost:1004 10:45 StationX StationA;";
 //     // Loading payload string into payload struct
 //     load_payload(&payload_struct, payload_string);
 
@@ -101,6 +103,7 @@ void print_payload(PAYLOAD payload_struct){
 
 //     payload_struct.found = found;
 //     payload_struct.hops = hops;
+//     payload_struct.current = hops;
 //     memcpy(payload_struct.routes, routes, MAX_NAME_LENGTH * sizeof(char) * hops);
 //     memcpy(payload_struct.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char) * hops);
 //     strcpy(payload_struct.time, time);
