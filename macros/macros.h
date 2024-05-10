@@ -1,0 +1,5 @@
+#define MAX_BUFFER 256
+#define MAX_NAME_LENGTH 61
+#define MAX_COORDINATE 11
+#define MAX_TIMESTRING 6
+#define MAX_PORT 8

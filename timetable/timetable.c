@@ -70,6 +70,7 @@ int readneighbours(int argc, char **argv, NEIGHBOURS **neighbours){
   }
   for(int i = 4; i < argc; i++){
     sscanf(argv[i], "%60[^:]:%s", (*neighbours)[count].ip_addr, (*neighbours)[count].udp_port);
+    sprintf((*neighbours)[count].addr_and_port, "%s:%s", (*neighbours)[count].ip_addr, (*neighbours)[count].udp_port);
     count++;
     if(size == count){
       size *= 2;
@@ -92,7 +93,7 @@ void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES){
 }
 
 void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS){
-  for(int i = 0; i < NUM_NEIGHBOURS; i++){
-    printf("%s:%s\n", neighbours[i].ip_addr, neighbours[i].udp_port);
+  for(int i = 0; i < NUM_NEIGHBOURS; i++) {
+    printf("%s\n", neighbours[i].addr_and_port);
   }
 }

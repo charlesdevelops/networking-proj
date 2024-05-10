@@ -1,23 +1,24 @@
 #include "payload.h"
 
-char* craft_payload(int found, int hops, char **routes, char **address, char* time, char* source, char* destination) {
-    char* payload = (char*)malloc(100 * sizeof(char));
-    sprintf(payload, "%d %d", found, hops);
-    for (int i = 0; i < hops; i++) {
+char* craft_payload(PAYLOAD p) {
+    // This is the oversized malloc()ed payload, with this being able to support dynamically long payload of any size. 
+    char* payload = (char*)malloc((p.hops * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_TIMESTRING) + 2 * MAX_NAME_LENGTH) * sizeof(char));
+    sprintf(payload, "%d %d", p.found, p.hops);
+    for (int i = 0; i < p.hops; i++) {
         strcat(payload, " ");
-        strcat(payload, routes[i]);
+        strcat(payload, p.routes[i]);
     }
 
-    for (int i = 0; i < hops; i++) {
+    for (int i = 0; i < p.hops; i++) {
       strcat(payload, " ");
-      strcat(payload, address[i]);
+      strcat(payload, p.address[i]);
     }
     strcat(payload, " ");
-    strcat(payload, time);
+    strcat(payload, p.time);
     strcat(payload, " ");
-    strcat(payload, destination);
+    strcat(payload, p.destination);
     strcat(payload, " ");
-    strcat(payload, source);
+    strcat(payload, p.source);
     strcat(payload, ";"); // end
     return payload;
 }
@@ -77,29 +78,39 @@ void print_payload(PAYLOAD payload_struct){
     printf("Destination: %s\n", payload_struct.destination);
     printf("Source: %s\n", payload_struct.source);
 }
-int main() {
-    PAYLOAD payload_struct;
-    char payload_string[] = "0 3 StationA StationB StationC localhost:1002 localhost:1003 localhost:1004 10:45 StationX StationA;";
-    // Loading payload string into payload struct
-    load_payload(&payload_struct, payload_string);
+// int main() {
+//     PAYLOAD payload_struct;
+//     char payload_string[] = "0 3 StationA StationB StationC localhost:1002 localhost:1003 localhost:1004 10:45 StationX StationA;";
+//     // Loading payload string into payload struct
+//     load_payload(&payload_struct, payload_string);
 
-    print_payload(payload_struct);
+//     print_payload(payload_struct);
 
-    // Free allocated memory for stations
-    for (int i = 0; i < payload_struct.hops; i++) {
-        free(payload_struct.routes[i]);
-        free(payload_struct.address[i]);
-    }
-    int found = 1;
-    int hops = 7;
-    char *stations[MAX_NAME_LENGTH] = {"StationA", "StationC", "StationD", "StationE", "StationZ", "StationG", "StationX"};
-    char *address[MAX_PORT + INET6_ADDRSTRLEN + 1] = {"localhost:1001", "localhost:1002", "localhost:1003", "localhost:1005", "localhost:1006", "localhost:1008", "localhost:1009"};
-    char time[] = "12:12";
-    char sender[] = "StationA";
-    char receiver[] = "StationX";
+//     // Free allocated memory for stations
+//     for (int i = 0; i < payload_struct.hops; i++) {
+//         free(payload_struct.routes[i]);
+//         free(payload_struct.address[i]);
+//     }
+//     int found = 1;
+//     int hops = 7;
+//     char *routes[MAX_NAME_LENGTH] = {"StationA", "StationC", "StationD", "StationE", "StationZ", "StationG", "StationX"};
+//     char *address[MAX_PORT + INET6_ADDRSTRLEN + 1] = {"localhost:1001", "localhost:1002", "localhost:1003", "localhost:1005", "localhost:1006", "localhost:1008", "localhost:1009"};
+//     char time[] = "12:12";
+//     char source[] = "StationA";
+//     char destination[] = "StationX";
 
-    char *newpayload = craft_payload(found, hops, stations, address, time, sender, receiver);
-    load_payload(&payload_struct, newpayload);
-    print_payload(payload_struct);
-    return 0;
-}
+//     payload_struct.found = found;
+//     payload_struct.hops = hops;
+//     memcpy(payload_struct.routes, routes, MAX_NAME_LENGTH * sizeof(char) * hops);
+//     memcpy(payload_struct.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char) * hops);
+//     strcpy(payload_struct.time, time);
+//     strcpy(payload_struct.source, source);
+//     strcpy(payload_struct.destination, destination);
+    
+    
+
+//     char *newpayload = craft_payload(payload_struct);
+//     load_payload(&payload_struct, newpayload);
+//     print_payload(payload_struct);
+//     return 0;
+// }

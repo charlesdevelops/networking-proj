@@ -7,7 +7,7 @@ Connection: Closed\r\n\
 #define HTML_200_MESSAGE \
 "<html>\r\n\
 <body>\r\n\
-<h1> Hello </h1>\r\n\
+<h1> The time will be ... </h1>\r\n\
 </body>\r\n\
 </html>\r\n"
 

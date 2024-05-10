@@ -2,13 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define MAX_BUFFER 256
-#define MAX_NAME_LENGTH 61
-#define MAX_COORDINATE 11
-#define MAX_TIMESTRING 6
-#define MAX_PORT 8
-
+#include <netinet/in.h>
+#include "../macros/macros.h"
 /*
 # station-name,longitude,latitude
 StationC,115.8300,-31.7600
@@ -23,9 +18,9 @@ typedef struct station {
 }STATION;
 
 typedef struct neighbours {
-  char ip_addr[MAX_NAME_LENGTH];
+  char ip_addr[INET6_ADDRSTRLEN];
   char udp_port[MAX_PORT];
-  char name[MAX_NAME_LENGTH];
+  char addr_and_port[INET6_ADDRSTRLEN + MAX_PORT + 1];
 }NEIGHBOURS;
 
 typedef struct Timetable{

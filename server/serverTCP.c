@@ -1,6 +1,6 @@
  #include "serverTCP.h"
  #include "response_http.h"
- #define BACKLOG 10
+
  struct addrinfo *getAddrInfo(char *port){
   int rv;
   struct addrinfo hints, *servers;
@@ -16,14 +16,6 @@
   return servers;
 };
 
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa){
-  if ( sa->sa_family == AF_INET) {
-    return &(((struct sockaddr_in*)sa)->sin_addr); // convert to IPv4 sockaddr_in
-  }
-
-  return &(((struct sockaddr_in6 *)sa)->sin6_addr);
-}
 
 int new_connection(int sockfd){
   int new_fd;
@@ -33,14 +25,15 @@ int new_connection(int sockfd){
   char s[INET6_ADDRSTRLEN];
 
   sin_size = sizeof client_addr;
-    new_fd = accept(sockfd, (struct sockaddr *) &client_addr, &sin_size);
-    if (new_fd == -1) {
-      perror("accept");
-      return -1;
-    }
-
-    inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
-    printf("server: new connection from %s on new connection %d\n", s, new_fd);
+  new_fd = accept(sockfd, (struct sockaddr *) &client_addr, &sin_size);
+  if (new_fd == -1) {
+     perror("accept");
+    return -1;
+  }
+    // VERBOSE.
+    // inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
+    // struct sockaddr_in testport = *((struct sockaddr_in *)&client_addr);
+    // printf("server: new connection from %s on new connection %d with port %d\n", s, new_fd, ntohs(testport.sin_port));
 
     return new_fd;
 };
@@ -60,8 +53,6 @@ void setup_TCP(int *sockfd, char *TCP_PORT){
     }
 
     int yes=1;
-    //char yes='1'; // Solaris people use this
-
     // lose the pesky "Address already in use" error message
     if (setsockopt(*sockfd ,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof yes) == -1) {
       perror("setsockopt");

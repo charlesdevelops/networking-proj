@@ -6,6 +6,9 @@
 #include "server/serverUDP.h"
 #include "server/response_http.h"
 #include "timetable/timetable.h"
+#include "payload/payload.h"
+
+#define HTTP_HEADER 60
 
 char TCP_port[MAX_PORT];
 char UDP_port[MAX_PORT];
@@ -32,16 +35,18 @@ int main(int argc, char **argv)
   NUM_NEIGHBOURS = readneighbours(argc, argv, &Neighbours);
 
   // print_timetable(Timetable, NUM_TIMETABLES);
-  // print_neighbours(Neighbours, NUM_NEIGHBOURS);
+  print_neighbours(Neighbours, NUM_NEIGHBOURS);
   int TCP_fd, UDP_fd;
   fd_set master; // master file descriptor list
   fd_set read_fds;
+  fd_set to_write_fds; // this is the descriptor list for the client.
   int fdmax; // max fd number
-  int i, j; // reserved for "for loop"
-  char query[MAXDATASIZE];
+  char query[HTTP_HEADER];
+  int nbytes;
   char *response;
   FD_ZERO(&master);
   FD_ZERO(&read_fds);
+  FD_ZERO(&to_write_fds);
 
   setup_TCP(&TCP_fd, TCP_port);
   FD_SET(TCP_fd, &master);
@@ -53,34 +58,71 @@ int main(int argc, char **argv)
   fdmax = (UDP_fd > TCP_fd) ? UDP_fd : TCP_fd;
   printf("fdmax: %d\n", fdmax);
   while(1) {
+    FD_ZERO(&read_fds);
     read_fds = master;
+
     if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1){
       perror("select");
       exit(EXIT_FAILURE);
     }
-    if (FD_ISSET(TCP_fd, &read_fds)) {
+    if(FD_ISSET(TCP_fd, &read_fds)) {
       // handles client web connection (TCP)
       int new_fd = new_connection(TCP_fd);
-      FD_SET(new_fd, &master);
-      if (new_fd > fdmax) {
-        fdmax = new_fd;
+
+      if((nbytes = recv(new_fd, query, HTTP_HEADER, 0)) <= 0) {
+        
+        if(nbytes == 0) {
+          continue;
+        } else {
+          perror("recv");
+        }
       }
-     
-      if(recv(new_fd, query, MAXDATASIZE, 0) <= 0){
-        perror("recv");
-        exit(1);
-      } printf("%s", query);
+      printf("socket %d been accepted and kept to be sent a response \n", new_fd);
+      FD_SET(new_fd, &to_write_fds);
+      printf("Received:\n\n%s\n", query);
+      response = calloc((strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + 5), sizeof(char));
+
+      if (response == NULL) perror("calloc");
+      sprintf(response, "%s\r\n%s", HTTP_200_RESPONSE,HTML_200_MESSAGE);
+      if (send(new_fd, response, strlen(response), 0) == -1) {
+          perror("send");
+          exit(EXIT_FAILURE);
+      };
+      printf("%s", query);
 
       char destination[61];
       sscanf(query, "GET /?to=%s HTTP/1.1\n", destination);
+
       /*
-        The crafting of the first payload here.
-      */
-      for(i = 0; i < NUM_NEIGHBOURS; i++){
-        talk_to(Neighbours[i].ip_addr, Neighbours[i].udp_port, destination);
+         The crafting of the first payload here.
+description: "<found or not> <number routes> <stations_name based on number routes> <those addresses corresponding to stations> <time (need further refinement)> <destination> <source>
+*/
+      PAYLOAD p; // payload
+
+      // INITIALIZE the PAYLOAD contents.
+      char *address[MAX_PORT + INET6_ADDRSTRLEN + 1];
+      address[0] = malloc((MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
+      char *routes[MAX_NAME_LENGTH]; 
+      routes[0] = malloc(MAX_NAME_LENGTH * sizeof(char));
+      strcpy(routes[0], Station.station_name);
+      char time[] = "99:99"; // what time does it start.
+      sprintf(address[0], "localhost:%s", UDP_port);
+
+      // PUT IN PAYLOAD
+      p.found = 0; p.hops = 1; // not found, first hop.
+      strcpy(p.time, time);
+      strcpy(p.source, Station.station_name);
+      strcpy(p.destination, destination);
+      memcpy(p.routes, routes, MAX_NAME_LENGTH * sizeof(char));
+      memcpy(p.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
+      char* payload_tosend = craft_payload(p);
+      printf("The payload: %s\n", payload_tosend);
+      printf("TcP1\n");
+      for(int i = 0; i < NUM_NEIGHBOURS; i++){
+        talk_to(Neighbours[i].ip_addr, Neighbours[i].udp_port, payload_tosend);
       }
-    }
-    if(FD_ISSET(UDP_fd, &read_fds)){
+    } else if(FD_ISSET(UDP_fd, &read_fds)){
+      printf("UdP1\n");
       struct sockaddr_storage client_addr;
       socklen_t addr_len = sizeof(client_addr);
       char buffer[MAXDATASIZE];
@@ -96,7 +138,46 @@ int main(int argc, char **argv)
       // Process received UDP data here
       buffer[num_bytes] = '\0'; // IMPORTANT
 
-      printf("Received UDP data: %s\n", buffer);
+      PAYLOAD received_payload;  
+      load_payload(&received_payload, buffer);
+
+      
+      if(received_payload.found){
+        if(!strcmp(received_payload.source, Station.station_name)){
+          printf("Got the answers!");
+        }
+        // else {
+        //   for(int j = 0; j < received_payload.hops; j++){
+        //     if(!strcmp(received_payload.source, Station.station_name)){
+        //       printf("In progress");
+        //     }
+        //   }
+        // }
+      }
+      else {
+        int hops = received_payload.hops;
+        received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
+        received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
+        sprintf(received_payload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
+        strcpy(received_payload.routes[hops], Station.station_name);
+        received_payload.hops++;
+
+        for(int j = 0; j < NUM_NEIGHBOURS; j++){
+          int been_there = 0;
+          for(int k = 0; k < hops; k++){
+            if(!strcmp(Neighbours[j].addr_and_port, received_payload.address[k])){
+              been_there = 1;
+              break;
+            }
+          }
+          // the data's been there, just move on to others.
+          if(been_there) continue;
+          printf("Hello\n");
+          char *payload_tosend = craft_payload(received_payload);
+          talk_to(Neighbours[j].ip_addr, Neighbours[j].udp_port, payload_tosend);
+        }
+      }
+      print_payload(received_payload);
     }
   }
   return 0;

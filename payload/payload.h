@@ -1,6 +1,8 @@
-#include "../timetable/timetable.h"
-#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <netinet/in.h>
+#include "../macros/macros.h"
 typedef struct payload{
   int found; // 0 or 1
   int hops;
@@ -11,4 +13,6 @@ typedef struct payload{
   char time[MAX_TIMESTRING];
 } PAYLOAD;
 
-
+char* craft_payload(PAYLOAD payload_struct);
+void load_payload(PAYLOAD *payload_struct, char* payload_string);
+void print_payload(PAYLOAD payload_struct);
