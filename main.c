@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
       /*
          The crafting of the first payload here.
-description: "<found or not> <number routes> <stations_name based on number routes> <those addresses corresponding to stations> <time (need further refinement)> <destination> <source>
+description: "<found or not> <number routes> <current> <stations_name based on number routes> <those addresses corresponding to stations> <time (need further refinement)> <destination> <source>
 */
       PAYLOAD p; // payload
 
@@ -157,18 +157,18 @@ description: "<found or not> <number routes> <stations_name based on number rout
         if(!strcmp(received_payload.source, Station.station_name)){
           printf("Got the answers!");
           // send answer to client browser.
-        }
-        // BACKTRACE! definitely a neighbour.
-        printf("BACKTRACE!\n");
-        char ip_target[INET6_ADDRSTRLEN];
-        char port_target[MAX_PORT];
-        int current =  --received_payload.current;
-        sscanf(received_payload.address[current-1], "%45[^:]:%s", ip_target, port_target);
-        printf("%s\n", received_payload.address[current-1]);
-        char *payload_tosend = craft_payload(received_payload);
-        printf("payload to send %s\n", payload_tosend);
-        printf("Port_Target %s\n", ip_target);
-        talk_to(ip_target, port_target, payload_tosend);
+        } else {
+          // BACKTRACE! definitely a neighbour.
+          printf("BACKTRACE!\n");
+          char ip_target[INET6_ADDRSTRLEN];
+          char port_target[MAX_PORT];
+          int current =  --received_payload.current;
+          sscanf(received_payload.address[current-1], "%45[^:]:%s", ip_target, port_target);
+          printf("%s\n", received_payload.address[current-1]);
+          char *payload_tosend = craft_payload(received_payload);
+          printf("payload to send %s\n", payload_tosend);
+          talk_to(ip_target, port_target, payload_tosend);
+          }
       }
       else {
         printf("not found yet\n");
@@ -190,7 +190,8 @@ description: "<found or not> <number routes> <stations_name based on number rout
           }
           // the data's been there, just move on to others.
           if(been_there) continue;
-          printf("Hello\n");
+          printf("This is the station's timetable\n");
+          print_timetable(Timetable, NUM_TIMETABLES);
           char *payload_tosend = craft_payload(received_payload);
           talk_to(Neighbours[j].ip_addr, Neighbours[j].udp_port, payload_tosend);
         }
