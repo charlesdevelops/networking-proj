@@ -93,36 +93,49 @@ int main(int argc, char **argv)
       char destination[61];
       sscanf(query, "GET /?to=%s HTTP/1.1\n", destination);
 
-      /*
-         The crafting of the first payload here.
-description: "<found or not> <number routes> <current> <stations_name based on number routes> <those addresses corresponding to stations> <time (need further refinement)> <destination> <source>
+ /*
+ The crafting of the first payload here.
+  int found; // 0 or 1
+  int hops;
+  int current;
+  char **stations;
+  char **address; // their respective address per routes.
+  char **routes;
+  char **time; // their times.
+  char destination[MAX_NAME_LENGTH];
+  char source[MAX_NAME_LENGTH];
 */
+      char *payload_tosend = (char *)malloc((3 * sizeof(int)) + sizeof(char) * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_NAME_LENGTH + MAX_TIMESTRING) + (2 * MAX_NAME_LENGTH));
       PAYLOAD p; // payload
 
       // INITIALIZE the PAYLOAD contents.
-      char *address[MAX_PORT + INET6_ADDRSTRLEN + 1];
-      address[0] = malloc((MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
-      char *routes[MAX_NAME_LENGTH]; 
-      routes[0] = malloc(MAX_NAME_LENGTH * sizeof(char));
-      strcpy(routes[0], Station.station_name);
-      char time[] = "99:99"; // what time does it start.
-      sprintf(address[0], "localhost:%s", UDP_port);
+      // char *address[MAX_PORT + INET6_ADDRSTRLEN + 1];
+      // address[0] = malloc((MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
+      // char *routes[MAX_NAME_LENGTH]; 
+      // routes[0] = malloc(MAX_NAME_LENGTH * sizeof(char));
+      // strcpy(routes[0], Station.station_name);
+      // char time[] = "99:99"; // what time does it start.
+      // sprintf(address[0], "localhost:%s", UDP_port);
 
-      // PUT IN PAYLOAD
-      p.found = 0; p.hops = 1; p.current = 1; // not found, first hop, on first station (using 1-indexing);
-      strcpy(p.time, time);
-      strcpy(p.source, Station.station_name);
-      strcpy(p.destination, destination);
-      memcpy(p.routes, routes, MAX_NAME_LENGTH * sizeof(char));
-      memcpy(p.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
-      char* payload_tosend = craft_payload(p);
-      printf("The payload: %s\n", payload_tosend);
+      // // PUT IN PAYLOAD
+      // p.found = 0; p.hops = 1; p.current = 1; // not found, first hop, on first station (using 1-indexing);
+      // strcpy(p.time, time);
+      // strcpy(p.source, Station.station_name);
+      // strcpy(p.destination, destination);
+      // memcpy(p.routes, routes, MAX_NAME_LENGTH * sizeof(char));
+      // memcpy(p.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
+      // char* payload_tosend = craft_payload(p);
+      // printf("The payload: %s\n", payload_tosend);
+      char time[] = "10:00";
+
+      sprintf(payload_tosend, "0 1 1 %s localhost:%s HOME %s %s %s", Station.station_name, UDP_port, time, destination,Station.station_name);
       printf("TcP1\n");
+      printf("%s\n", payload_tosend);
       for(int i = 0; i < NUM_NEIGHBOURS; i++){
         talk_to(Neighbours[i].ip_addr, Neighbours[i].udp_port, payload_tosend);
       }
-    } else if(FD_ISSET(UDP_fd, &read_fds)){
-      printf("UdP1\n");
+    }
+     if(FD_ISSET(UDP_fd, &read_fds)){
       struct sockaddr_storage client_addr;
       socklen_t addr_len = sizeof(client_addr);
       char buffer[MAXDATASIZE];
@@ -140,23 +153,30 @@ description: "<found or not> <number routes> <current> <stations_name based on n
 
       PAYLOAD received_payload;  
       load_payload(&received_payload, buffer);
-      if(!strcmp(received_payload.destination, Station.station_name)){
+
+      // payload arrived at destination.
+      if(!strcmp(received_payload.destination, Station.station_name) && received_payload.found == 0){
         received_payload.found = 1;
         int hops = received_payload.hops;
-        received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
-        received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
+        // received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
+        // received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
         sprintf(received_payload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
-        strcpy(received_payload.routes[hops], Station.station_name);
+        strcpy(received_payload.stations[hops], Station.station_name);
+        strcpy(received_payload.routes[hops], Timetable[0].route_name);
+        strcpy(received_payload.time[hops], Timetable[0].arrival_time);
         received_payload.hops++;
         received_payload.current = received_payload.hops;
       }
 
+      // payload arrived at destination 2nd time.
 
       
       if(received_payload.found){
         if(!strcmp(received_payload.source, Station.station_name)){
-          printf("Got the answers!");
-          // send answer to client browser.
+          /*
+            Time to get the routes, and timeframes.
+          */
+         
         } else {
           // BACKTRACE! definitely a neighbour.
           printf("BACKTRACE!\n");
@@ -173,10 +193,12 @@ description: "<found or not> <number routes> <current> <stations_name based on n
       else {
         printf("not found yet\n");
         int hops = received_payload.hops;
-        received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
-        received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
+        // received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
+        // received_payload.routes[hops] = malloc(MAX_NAME_LENGTH);
         sprintf(received_payload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
-        strcpy(received_payload.routes[hops], Station.station_name);
+        strcpy(received_payload.stations[hops], Station.station_name);
+        strcpy(received_payload.routes[hops], "...");
+        strcpy(received_payload.time[hops], "...");
         received_payload.hops++;
         received_payload.current = received_payload.hops;
 
@@ -192,6 +214,7 @@ description: "<found or not> <number routes> <current> <stations_name based on n
           if(been_there) continue;
           printf("This is the station's timetable\n");
           print_timetable(Timetable, NUM_TIMETABLES);
+          
           char *payload_tosend = craft_payload(received_payload);
           talk_to(Neighbours[j].ip_addr, Neighbours[j].udp_port, payload_tosend);
         }
