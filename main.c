@@ -107,25 +107,7 @@ int main(int argc, char **argv)
 */
       char *payload_tosend = (char *)malloc((3 * sizeof(int)) + sizeof(char) * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_NAME_LENGTH + MAX_TIMESTRING) + (2 * MAX_NAME_LENGTH));
       PAYLOAD p; // payload
-
-      // INITIALIZE the PAYLOAD contents.
-      // char *address[MAX_PORT + INET6_ADDRSTRLEN + 1];
-      // address[0] = malloc((MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
-      // char *routes[MAX_NAME_LENGTH]; 
-      // routes[0] = malloc(MAX_NAME_LENGTH * sizeof(char));
-      // strcpy(routes[0], Station.station_name);
-      // char time[] = "99:99"; // what time does it start.
-      // sprintf(address[0], "localhost:%s", UDP_port);
-
-      // // PUT IN PAYLOAD
-      // p.found = 0; p.hops = 1; p.current = 1; // not found, first hop, on first station (using 1-indexing);
-      // strcpy(p.time, time);
-      // strcpy(p.source, Station.station_name);
-      // strcpy(p.destination, destination);
-      // memcpy(p.routes, routes, MAX_NAME_LENGTH * sizeof(char));
-      // memcpy(p.address, address, (MAX_PORT + INET6_ADDRSTRLEN + 1) * sizeof(char));
-      // char* payload_tosend = craft_payload(p);
-      // printf("The payload: %s\n", payload_tosend);
+      
       char time[] = "10:00";
 
       sprintf(payload_tosend, "0 1 1 %s localhost:%s HOME %s %s %s", Station.station_name, UDP_port, time, destination,Station.station_name);
