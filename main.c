@@ -7,6 +7,7 @@
 #include "server/response_http.h"
 #include "timetable/timetable.h"
 #include "payload/payload.h"
+#include <fcntl.h>
 
 #define HTTP_HEADER 60
 
@@ -19,6 +20,7 @@ NEIGHBOURS *Neighbours;
 int NUM_NEIGHBOURS;
 int NUM_TIMETABLES;
 
+int test_fd;
 int main(int argc, char **argv)
 {
   if(argc < 5){
@@ -49,6 +51,8 @@ int main(int argc, char **argv)
   FD_ZERO(&to_write_fds);
 
   setup_TCP(&TCP_fd, TCP_port);
+
+  fcntl(TCP_fd, F_SETFL, O_NONBLOCK);
   FD_SET(TCP_fd, &master);
   struct addrinfo *UDP_addrinfo = setup_UDP(&UDP_fd, UDP_port);
   struct sockaddr_in *addr_in = (struct sockaddr_in *)UDP_addrinfo->ai_addr;
@@ -88,8 +92,7 @@ int main(int argc, char **argv)
           perror("send");
           exit(EXIT_FAILURE);
       };
-      printf("%s", query);
-
+      test_fd = new_fd;
       char destination[61];
       sscanf(query, "GET /?to=%s HTTP/1.1\n", destination);
 
@@ -137,7 +140,7 @@ int main(int argc, char **argv)
       load_payload(&received_payload, buffer);
 
       // payload arrived at destination.
-      if(!strcmp(received_payload.destination, Station.station_name) && received_payload.found == 0){
+      if(!strcmp(received_payload.destination, Station.station_name) && (received_payload.found == 0)){
         received_payload.found = 1;
         int hops = received_payload.hops;
         // received_payload.address[hops] = malloc(MAX_PORT + INET6_ADDRSTRLEN + 1);
@@ -158,6 +161,9 @@ int main(int argc, char **argv)
           /*
             Time to get the routes, and timeframes.
           */
+         printf("FINISH LINE 1");
+         char* payload_tosend = craft_payload(received_payload);
+         send(test_fd, payload_tosend, strlen(payload_tosend), 0);
          
         } else {
           // BACKTRACE! definitely a neighbour.

@@ -1,0 +1,33 @@
+# station-name,longitude,latitude
+JunctionD,115.8400,-31.6200
+# departure-time,route-name,departing-from,arrival-time,arrival-station
+05:02,busD_C,stopD,05:33,TerminalC
+05:35,busD_E,stopD,05:46,BusportE
+06:12,busD_E,stopD,06:24,BusportE
+06:46,busD_C,stopD,07:17,TerminalC
+07:18,busD_E,stopD,07:29,BusportE
+07:52,busD_E,stopD,08:03,BusportE
+08:29,busD_C,stopD,09:01,TerminalC
+09:03,busD_E,stopD,09:13,BusportE
+09:35,busD_E,stopD,09:47,BusportE
+10:11,busD_C,stopD,10:42,TerminalC
+10:44,busD_C,stopD,11:17,TerminalC
+11:21,busD_E,stopD,11:33,BusportE
+11:59,busD_E,stopD,12:09,BusportE
+12:31,busD_E,stopD,12:42,BusportE
+13:07,busD_C,stopD,13:40,TerminalC
+13:45,busD_C,stopD,14:16,TerminalC
+14:20,busD_E,stopD,14:30,BusportE
+14:55,busD_C,stopD,15:27,TerminalC
+15:31,busD_E,stopD,15:42,BusportE
+16:06,busD_E,stopD,16:17,BusportE
+16:40,busD_C,stopD,17:11,TerminalC
+17:12,busD_C,stopD,17:44,TerminalC
+17:48,busD_C,stopD,18:19,TerminalC
+18:22,busD_E,stopD,18:33,BusportE
+18:59,busD_E,stopD,19:11,BusportE
+19:36,busD_E,stopD,19:48,BusportE
+20:10,busD_C,stopD,20:42,TerminalC
+20:44,busD_E,stopD,20:55,BusportE
+21:17,busD_C,stopD,21:49,TerminalC
+21:52,busD_C,stopD,22:23,TerminalC
