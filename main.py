@@ -1,5 +1,9 @@
 import socket
 import argparse
+import select
+import re
+
+MAX_NAME_LENGTH = 100
 
 def parse_neighbor_port(arg):
     try:
@@ -34,12 +38,9 @@ print("Neighbour Ports:", NEIGHBORS)
 
 # TCP/IP socket for web browser communication
 HOST_TCP = ''
-# PORT_TCP = 2401
 
 # UDP/IP socket for station-to-station communication
 HOST_UDP = ''
-# PORT_UDP = 2408
-# NEIGHBORS = [('host2', 2560), ('host3', 2566)]  # Neighbor station addresses
 
 # Create a TCP/IP socket
 server_socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,19 +73,78 @@ def handle_tcp_connection(client_socket_tcp, client_address_tcp):
         # Clean up the connection
         client_socket_tcp.close()
 
+def parse_payload(payload_str):
+    parts = payload_str.split()
+    found = int(parts[0])
+    hops = int(parts[1])
+    current = int(parts[2])
+    stations = parts[3:3+hops]
+    addresses = parts[3+hops:3+hops*2]
+    routes = parts[3+hops*2:3+hops*3]
+    times = parts[3+hops*3:3+hops*4]
+    destination = parts[3+hops*4]
+    source = parts[3+hops*4+1]
+    return found, hops, current, stations, addresses, routes, times, destination, source
+
 def handle_udp_datagram(data, address):
     print(f'Received UDP datagram from {address}: {data.decode()}')
-    # Process the received UDP datagram
-    # ...
 
-    # Send a response back to the neighbor station (if needed)
-    response = b'UDP response from this station'
-    server_socket_udp.sendto(response, address)
+    # Parse the received payload
+    payload_str = data.decode().rstrip(';')
+    found, hops, current, stations, addresses, routes, times, destination, source = parse_payload(payload_str)
 
-    # Optionally, forward the datagram to other neighbor stations
-    for neighbor in NEIGHBORS:
-        if neighbor != address:
-            server_socket_udp.sendto(data, neighbor)
+    # Check if this station is the destination
+    if station_name == destination:
+        if found == 1:
+            # Update routes and times
+            updated_routes = []
+            updated_times = []
+            for i in range(current-1, -1, -1):
+                updated_routes.append(routes[i])
+                updated_times.append(times[i])
+
+            # Construct the updated payload
+            updated_payload = " ".join([
+                str(2), str(hops), str(current),
+                *stations, *addresses,
+                *updated_routes, *updated_times,
+                destination, source
+            ]) + ";"
+
+            # Send the updated payload back to the source
+            server_socket_udp.sendto(updated_payload.encode(), address)
+
+        elif found == 3:
+            # Route found successfully
+            print(f"Route found from {source} to {destination}")
+            print(f"Number of hops: {hops}")
+            print(f"Station names: {stations}")
+            print(f"Station addresses: {addresses}")
+            print(f"Routes: {routes}")
+            print(f"Departure times: {times}")
+
+    else:
+        # Forward the datagram to the appropriate neighbor station
+        for neighbor_address in NEIGHBORS:
+            if neighbor_address != address:
+                server_socket_udp.sendto(data, neighbor_address)
+
+        # Backtrace to the previous station
+        if found == 1:
+            current -= 1
+            neighbor_ip, neighbor_port = re.match(r"([^:]+):(\d+)", addresses[current-1]).groups()
+            neighbor_address = (neighbor_ip, int(neighbor_port))
+
+            # Construct the updated payload
+            updated_payload = " ".join([
+                str(found), str(hops), str(current),
+                *stations, *addresses,
+                *routes, *times,
+                destination, source
+            ]) + ";"
+
+            # Send the updated payload to the previous station
+            server_socket_udp.sendto(updated_payload.encode(), neighbor_address)
 
 def create_http_response():
     html_content = """
@@ -103,11 +163,25 @@ def create_http_response():
     http_response = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {len(html_content)}\r\n\r\n{html_content}"
     return http_response.encode()
 
-while True:
-    # Handle incoming TCP connections from web browsers
-    client_socket_tcp, client_address_tcp = server_socket_tcp.accept()
-    handle_tcp_connection(client_socket_tcp, client_address_tcp)
+# while True:
+#     # Handle incoming TCP connections from web browsers
+#     client_socket_tcp, client_address_tcp = server_socket_tcp.accept()
+#     handle_tcp_connection(client_socket_tcp, client_address_tcp)
 
-    # Handle incoming UDP datagrams from other station servers
-    data, address = server_socket_udp.recvfrom(1024)
-    handle_udp_datagram(data, address)
+#     # Handle incoming UDP datagrams from other station servers
+#     data, address = server_socket_udp.recvfrom(1024)
+#     handle_udp_datagram(data, address)
+
+while True:
+    read_sockets, _, _ = select.select([server_socket_tcp, server_socket_udp], [], [])
+
+    for sock in read_sockets:
+        if sock == server_socket_tcp:
+            # Handle incoming TCP connection
+            client_socket_tcp, client_address_tcp = sock.accept()
+            handle_tcp_connection(client_socket_tcp, client_address_tcp)
+
+        elif sock == server_socket_udp:
+            # Handle incoming UDP datagram
+            data, address = sock.recvfrom(1024)
+            handle_udp_datagram(data, address)
