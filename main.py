@@ -1,13 +1,45 @@
 import socket
+import argparse
+
+def parse_neighbor_port(arg):
+    try:
+        hostname, port = arg.split(':')
+        return hostname, int(port)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Neighbor port must be in the format 'hostname:port'")
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Station Server')
+
+    parser.add_argument('station_name', type=str, help='Name of the station')
+    parser.add_argument('browser_port', type=int, help='Port number for browser (TCP)')
+    parser.add_argument('query_port', type=int, help='Port number for queries (UDP)')
+    parser.add_argument('neighbour_ports', nargs='+', type=parse_neighbor_port, help='List of neighbor ports in the format hostname:port')
+
+    return parser.parse_args()
+
+args = parse_args()
+
+station_name = args.station_name
+PORT_TCP = args.browser_port
+PORT_UDP = args.query_port
+NEIGHBORS = args.neighbour_ports
+
+
+# debugging
+print("Station Name:", station_name)
+print("Browser Port:", PORT_TCP)
+print("Query Port:", PORT_UDP)
+print("Neighbour Ports:", NEIGHBORS)
 
 # TCP/IP socket for web browser communication
 HOST_TCP = ''
-PORT_TCP = 2401
+# PORT_TCP = 2401
 
 # UDP/IP socket for station-to-station communication
 HOST_UDP = ''
-PORT_UDP = 2408
-NEIGHBORS = [('host2', 2560), ('host3', 2566)]  # Neighbor station addresses
+# PORT_UDP = 2408
+# NEIGHBORS = [('host2', 2560), ('host3', 2566)]  # Neighbor station addresses
 
 # Create a TCP/IP socket
 server_socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
