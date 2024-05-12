@@ -21,3 +21,4 @@ typedef struct payload{
 char* craft_payload(PAYLOAD payload_struct);
 void load_payload(PAYLOAD *payload_struct, char* payload_string);
 void print_payload(PAYLOAD payload_struct);
+void get_ip_port(PAYLOAD payload_struct, char* ip, char* port, int which);

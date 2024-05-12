@@ -92,8 +92,25 @@ void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES){
   }
 }
 
+// Function to convert time string to minutes since midnight
+int timeToMinutes(char *timeStr) {
+    int hours, minutes;
+    sscanf(timeStr, "%d:%d", &hours, &minutes);
+    return hours * 60 + minutes;
+}
+
+int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_time, char *station_to_go){
+  for(int i = 0; i < NUM_TIMETABLES; i++) {
+    if(timeToMinutes(starting_time) > timeToMinutes(timetable[i].arrival_time)) continue;
+    if(!strcmp(station_to_go, timetable[i].arrival_station))
+      return i;
+  }
+  return -1;
+}
+
 void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS){
   for(int i = 0; i < NUM_NEIGHBOURS; i++) {
     printf("%s\n", neighbours[i].addr_and_port);
   }
 }
+

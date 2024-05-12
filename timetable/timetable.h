@@ -38,3 +38,5 @@ int readtimetable(char *timetable, STATION *Station, TIMETABLE **Station_Timetab
 int readneighbours(int argc, char **argv, NEIGHBOURS **neighbours);
 void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES);
 void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS);
+int timeToMinutes(char *timeStr);
+int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_time, char *station_to_go);

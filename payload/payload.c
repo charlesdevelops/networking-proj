@@ -113,6 +113,10 @@ void print_payload(PAYLOAD payload_struct){
     printf("Source: %s\n\n", payload_struct.source);
 }
 
+void get_ip_port(PAYLOAD payload_struct, char *ip, char *port, int which){
+  sscanf(payload_struct.address[which-1], "%45[^:]:%s", ip, port);
+}
+
 // int main() {
 //     PAYLOAD payload_struct;
 //     char payload_string[] = "1 5 5 StationA StationB StationC StationD StationE localhost:1002 localhost:1003 localhost:1004 localhost:1005 localhost:1006 BASE A_B B_C C_D D_E 10:45 11:45 12:45 13:45 14:45 StationX StationA;";
