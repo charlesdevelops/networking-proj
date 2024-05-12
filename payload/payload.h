@@ -5,7 +5,7 @@
 #include "../macros/macros.h"
 
 typedef struct payload{
-  int found; // 0 or 1
+  int found; // 0 or 1 or 2 or 3 or 4.
   int hops;
   int current;
   char **stations;
