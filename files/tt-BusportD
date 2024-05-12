@@ -1,0 +1,17 @@
+# station-name,longitude,latitude
+BusportD,115.8300,-31.5700
+# departure-time,route-name,departing-from,arrival-time,arrival-station
+06:01,busD_F,stopD,06:28,TerminalF
+07:06,busD_F,stopD,07:34,TerminalF
+08:10,busD_F,stopD,08:36,TerminalF
+09:14,busD_F,stopD,09:41,TerminalF
+10:21,busD_F,stopD,10:47,TerminalF
+11:25,busD_F,stopD,11:51,TerminalF
+12:30,busD_F,stopD,12:56,TerminalF
+13:32,busD_F,stopD,13:58,TerminalF
+14:37,busD_F,stopD,15:03,TerminalF
+15:39,busD_F,stopD,16:06,TerminalF
+16:44,busD_F,stopD,17:10,TerminalF
+17:50,busD_F,stopD,18:16,TerminalF
+18:53,busD_F,stopD,19:19,TerminalF
+19:58,busD_F,stopD,20:26,TerminalF
