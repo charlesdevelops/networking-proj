@@ -38,26 +38,26 @@ struct addrinfo *setup_UDP(int *sockfd, char *UDP_PORT){
   return p;
 }
 
-void service_UDP(int sockfd){
-  int numbytes;
-  struct sockaddr_storage client_addr;
-  socklen_t addr_len;
-  char msg[MAXBUFLEN];
-  char s[INET6_ADDRSTRLEN];
+// void service_UDP(int sockfd){
+//   int numbytes;
+//   struct sockaddr_storage client_addr;
+//   socklen_t addr_len;
+//   char msg[MAXBUFLEN];
+//   char s[INET6_ADDRSTRLEN];
 
-   addr_len = sizeof client_addr;
-  if ((numbytes = recvfrom(sockfd, msg, MAXBUFLEN-1, 0, (struct sockaddr*)&client_addr, &addr_len)) == -1){
-      perror("recvfrom");
-      exit(1);
-    }
+//    addr_len = sizeof client_addr;
+//   if ((numbytes = recvfrom(sockfd, msg, MAXBUFLEN-1, 0, (struct sockaddr*)&client_addr, &addr_len)) == -1){
+//       perror("recvfrom");
+//       exit(1);
+//     }
   
-    printf("listener: got packet from %s port %hu\n", inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *)&client_addr), s, sizeof s), *(in_port_t *)get_in_port((struct sockaddr *)&client_addr));
+//     printf("listener: got packet from %s port %hu\n", inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *)&client_addr), s, sizeof s), *(in_port_t *)get_in_port((struct sockaddr *)&client_addr));
 
-    printf("listener: packet is %d bytes long\n", numbytes);
-    msg[numbytes] = '\0';
-    printf("listener: packet contains \"%s\"\n", msg);
-    if (!strcmp(msg, "END")) return;
-}
+//     printf("listener: packet is %d bytes long\n", numbytes);
+//     msg[numbytes] = '\0';
+//     printf("listener: packet contains \"%s\"\n", msg);
+//     if (!strcmp(msg, "END")) return;
+// }
 
 int talk_to(char *hostname, char *port, char *payload){
   int rv;

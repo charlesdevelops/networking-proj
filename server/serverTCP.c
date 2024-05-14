@@ -1,7 +1,7 @@
- #include "serverTCP.h"
- #include "response_http.h"
+#include "serverTCP.h"
+#include "response_http.h"
 
- struct addrinfo *getAddrInfo(char *port){
+struct addrinfo *getAddrInfo(char *port){
   int rv;
   struct addrinfo hints, *servers;
   // construct hints
@@ -27,15 +27,15 @@ int new_connection(int sockfd){
   sin_size = sizeof client_addr;
   new_fd = accept(sockfd, (struct sockaddr *) &client_addr, &sin_size);
   if (new_fd == -1) {
-     perror("accept");
+    perror("accept");
     return -1;
   }
-    // VERBOSE.
-    // inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
-    // struct sockaddr_in testport = *((struct sockaddr_in *)&client_addr);
-    // printf("server: new connection from %s on new connection %d with port %d\n", s, new_fd, ntohs(testport.sin_port));
+  // VERBOSE.
+  // inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr), s, sizeof s);
+  // struct sockaddr_in testport = *((struct sockaddr_in *)&client_addr);
+  // printf("server: new connection from %s on new connection %d with port %d\n", s, new_fd, ntohs(testport.sin_port));
 
-    return new_fd;
+  return new_fd;
 };
 
 
@@ -69,6 +69,17 @@ void setup_TCP(int *sockfd, char *TCP_PORT){
 
   freeaddrinfo(servinfo); // no need with the rest
 
+  // Set non-blocking flag
+  int flags = fcntl(*sockfd, F_GETFL, 0);
+  if (flags == -1) {
+    perror("fcntl get");
+    exit(EXIT_FAILURE);
+  }
+
+  if (fcntl(*sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    perror("fcntl set");
+    exit(EXIT_FAILURE);
+  }
   if (listen(*sockfd, BACKLOG) == -1) {
     perror("listen");
     exit(1);

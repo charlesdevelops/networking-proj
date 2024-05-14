@@ -13,7 +13,7 @@ NEIGHBORS = [('host2', 2560), ('host3', 2566)]  # Neighbor station addresses
 server_socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket_tcp.bind((HOST_TCP, PORT_TCP))
-server_socket_tcp.listen(5)
+server_socket_tcp.listen(20)
 
 # Create a UDP/IP socket
 server_socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

@@ -11,7 +11,7 @@ StationC,115.8300,-31.7600
 06:03,busC_B,stopC,06:23,BusportB
 */
 
-typedef struct station {
+typedef struct station { 
   char station_name[MAX_NAME_LENGTH];
   char longitude[MAX_COORDINATE];
   char latitude[MAX_COORDINATE];
@@ -21,6 +21,7 @@ typedef struct neighbours {
   char ip_addr[INET6_ADDRSTRLEN];
   char udp_port[MAX_PORT];
   char addr_and_port[INET6_ADDRSTRLEN + MAX_PORT + 1];
+  char name[MAX_NAME_LENGTH];
 }NEIGHBOURS;
 
 typedef struct Timetable{

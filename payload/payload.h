@@ -14,7 +14,7 @@ typedef struct payload{
   char **time; // their times.
   char destination[MAX_NAME_LENGTH];
   char source[MAX_NAME_LENGTH];
-  
+  char start_time[MAX_TIMESTRING];
 } PAYLOAD;
 
 
