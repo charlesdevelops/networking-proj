@@ -3,3 +3,5 @@
 #define MAX_COORDINATE 11
 #define MAX_TIMESTRING 6
 #define MAX_PORT 8
+#define BACKLOG 10
+#define MAXDATASIZE 1024

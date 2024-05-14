@@ -33,7 +33,18 @@ struct addrinfo *setup_UDP(int *sockfd, char *UDP_PORT){
     fprintf(stderr, "failed to bind socket\n");
     return NULL;
   }
+  // Set non-blocking flag
+  int flags = fcntl(*sockfd, F_GETFL, 0);
+  if (flags == -1) {
+    perror("fcntl get");
+    exit(EXIT_FAILURE);
+  }
 
+  if (fcntl(*sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+    perror("fcntl set");
+    exit(EXIT_FAILURE);
+  }
+  
   freeaddrinfo(servinfo);
   return p;
 }

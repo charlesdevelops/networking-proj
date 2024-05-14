@@ -21,8 +21,8 @@ int new_connection(int sockfd){
   int new_fd;
   struct sockaddr_storage client_addr;
   socklen_t sin_size;
-  char *response;
-  char s[INET6_ADDRSTRLEN];
+  // char *response;
+  // char s[INET6_ADDRSTRLEN];
 
   sin_size = sizeof client_addr;
   new_fd = accept(sockfd, (struct sockaddr *) &client_addr, &sin_size);
@@ -35,6 +35,17 @@ int new_connection(int sockfd){
   // struct sockaddr_in testport = *((struct sockaddr_in *)&client_addr);
   // printf("server: new connection from %s on new connection %d with port %d\n", s, new_fd, ntohs(testport.sin_port));
 
+  int flags = fcntl(new_fd, F_GETFL, 0);
+  if (flags == -1) {
+      perror("fcntl get");
+      close(new_fd);
+      return -1;
+  }
+  if (fcntl(new_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+      perror("fcntl set");
+      close(new_fd);
+      return -1;
+  }
   return new_fd;
 };
 
