@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# written by Chris.McDonald@uwa.edu.au
+# written by Chris.McDonald@uwa.edu.au (and modified by us)
 # thanks to:  https://en.clipdealer.com/vector/media/A:112583666
 
 HOST="localhost"	# assuming all stations on the same host
