@@ -63,11 +63,11 @@ int main(int argc, char **argv)
 
     // tv.tv_sec = 0;
     //  tv.tv_usec = 100;
-    if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1){
+    if(select(fdmax+1, &read_fds, NULL, NULL, NULL) < 0){
       perror("select");
       exit(EXIT_FAILURE);
     }
-if(FD_ISSET(UDP_fd, &read_fds)){
+    if(FD_ISSET(UDP_fd, &read_fds)){
       printf("***\nIn UDP\n\n");
       struct sockaddr_storage client_addr;
       socklen_t addr_len = sizeof(client_addr);
