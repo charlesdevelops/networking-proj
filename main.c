@@ -60,10 +60,24 @@ int main(int argc, char **argv)
   printf("UDP Port: %d\n", ntohs(addr_in->sin_port));
   FD_SET(UDP_fd, &master);
   fdmax = (UDP_fd > TCP_fd) ? UDP_fd : TCP_fd;
+  struct timeval tv; // Timeout struct
   printf("fdmax: %d\n", fdmax);
   while(1) {
     FD_ZERO(&read_fds);
     read_fds = master;
+    tv.tv_sec = 1;  // Timeout of 1 second
+    tv.tv_usec = 0; // 0 microseconds
+
+    int retval = select(fdmax+1, &read_fds, NULL, NULL, &tv);
+    if(retval == -1) {
+        perror("select");
+        exit(EXIT_FAILURE);
+    } else if(retval == 0) {
+        // Timeout occurred
+        printf("Timeout occurred! No data received in 1 second.\n");
+        // You can place your retry logic here, e.g., re-send a request or handle the timeout
+        continue; // Skip the rest of the loop to retry
+    }
 
     if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1){
       perror("select");
