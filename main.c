@@ -179,8 +179,9 @@ int main(int argc, char **argv)
           PAYLOAD curr_payload;
           load_payload(&curr_payload, q->answers);
           // update if its faster route (time)
-          if(timeToMinutes(curr_payload.time[curr_payload.hops - 1]) > timeToMinutes(pload.time[pload.hops - 1]))
+          if(timeToMinutes(curr_payload.time[curr_payload.hops - 1]) > timeToMinutes(pload.time[pload.hops - 1])){
             strcpy(q->answers, answer);
+          }
         }
         CLIENT_NODE *fd_tosend;
         while((fd_tosend = find_client(q)) != NULL){
@@ -256,7 +257,6 @@ int main(int argc, char **argv)
       
       bzero(query, MAXDATASIZE);
       if((nbytes = recv(new_fd, query, MAXDATASIZE, 0)) <= 0) {
-
         if(nbytes == 0) {
           continue;
         } else {
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
         add_query(new_q);
         add_client(new_fd, new_q);
       } else {
-        if(q->answers[0] != '\0') send(new_fd, q->answers, strlen(q->answers), 0);
+        add_client(new_fd, (*q));
       }
       
       /*

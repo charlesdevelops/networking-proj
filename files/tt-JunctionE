@@ -1,0 +1,29 @@
+# station-name,longitude,latitude
+JunctionE,115.8200,-31.7500
+# departure-time,route-name,departing-from,arrival-time,arrival-station
+06:02,busE_A,stopE,06:37,JunctionA
+06:37,busE_A,stopE,07:12,JunctionA
+07:13,busE_H,stopE,07:56,TerminalH
+07:50,busE_A,stopE,08:26,JunctionA
+08:26,busE_H,stopE,09:09,TerminalH
+09:03,busE_A,stopE,09:38,JunctionA
+09:39,busE_H,stopE,10:22,TerminalH
+10:16,busE_H,stopE,10:57,TerminalH
+10:50,busE_H,stopE,11:33,TerminalH
+11:24,busE_A,stopE,12:00,JunctionA
+12:00,busE_A,stopE,12:35,JunctionA
+12:33,busE_H,stopE,13:16,TerminalH
+13:08,busE_H,stopE,13:50,TerminalH
+13:42,busE_A,stopE,14:18,JunctionA
+14:18,busE_H,stopE,14:59,TerminalH
+14:50,busE_A,stopE,15:26,JunctionA
+15:24,busE_A,stopE,16:00,JunctionA
+16:01,busE_A,stopE,16:37,JunctionA
+16:35,busE_A,stopE,17:12,JunctionA
+17:09,busE_H,stopE,17:50,TerminalH
+17:43,busE_H,stopE,18:26,TerminalH
+18:20,busE_A,stopE,18:56,JunctionA
+18:54,busE_A,stopE,19:29,JunctionA
+19:30,busE_A,stopE,20:07,JunctionA
+20:04,busE_A,stopE,20:40,JunctionA
+20:38,busE_A,stopE,21:13,JunctionA
