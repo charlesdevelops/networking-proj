@@ -1,3 +1,5 @@
-JunctionA BusportB StationC
-BusportB JunctionA
-StationC JunctionA
+StationA BusportD
+TerminalB JunctionC
+JunctionC TerminalB BusportD StationE
+BusportD StationA JunctionC
+StationE JunctionC

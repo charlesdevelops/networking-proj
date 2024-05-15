@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     FD_ZERO(&read_fds);
     FD_SET(TCP_fd, &read_fds);
     FD_SET(UDP_fd, &read_fds);
-    tv.tv_sec = 1;
+    tv.tv_sec = 15;
     tv.tv_usec = 0;
     printf("***\nBack to select\n\n");
     int retval = select(fdmax+1, &read_fds, NULL, NULL, &tv);

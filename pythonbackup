@@ -67,8 +67,8 @@ class Payload:
             self.stations.append(new_station)
             self.addresses.append(new_address)
             # Placeholder for the other fields
-            self.routes.append("...")
-            self.times.append("...")
+            self.routes.append("New_Route")
+            self.times.append("New_Time")
         elif self.found == 1:
             # Implement backtrace logic
             self.current -= 1  # decrement current to simulate backtrace
@@ -185,7 +185,6 @@ class Timetable:
       for entry in self.entries[1:]:
         # departure-time,route-name,departing-from,arrival-time,arrival-station
         # if the time is now earlier, then go to the next if.
-        print(entry)
         if time_to_minutes(time_earlier) > time_to_minutes(entry[0]): continue
         if destination == entry[4]:
           return entry
@@ -296,8 +295,40 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
             # Wait for ready sockets
             print("Py: back to select\n")
             
-            read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 15)
+            read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 1)
+            # TIMEOUT per 1 SECONDS, and the protocol the address the yet received packet by
+            # checking those clients list (see if there is really any connection or there has been but not closed and answered yet)
+            # Lastly, if there is any clients, check its query, if its already inside the query list with answer, then immediately
+            # sendall the answer and close the clients
+            # If not just do the flooding by UDP send_to, to our own UDP server.
             if not (read_sockets or exception_sockets):
+              current = clients.head
+              while current is not None:
+                 if current.query is None:
+                    # bad client
+                    current.fd.close()
+                    clients.remove_client(current.fd)
+                 q = queries.search_query(current.query.destination, current.query.start_time)
+                 
+                 if q is not None:
+                    if q.answers is not None:
+                      current.fd.sendall(http_response(q.answers).encode('utf-8'))
+                      current.fd.close()
+                    else:
+                       init_payload = Payload(
+                        destination=q.destination,
+                        source=STATION_NAME,
+                        starting_time=q.start_time
+                       )
+                       message = init_payload.serialize()
+                       udp_socket.send_to(message, "localhost", udp_port)
+                 else:
+                    # queries are asked but not put in the list
+                    queries.add_query(current.query)
+                    qu = current.query
+                    new_p = Payload(destination=qu.destination, source=STATION_NAME, starting_time=qu.start_time)
+                    message = new_p.serialize()
+                    udp_socket.send_to(message, "localhost", udp_port)
               continue
 
             for notified_socket in read_sockets:
@@ -352,7 +383,10 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                              udp_socket.send_to(message, "localhost", udp_port)
                           else:
                              print("Query has been asked before, sending the fastest route")
+                             message = init_payload.serialize()
                              client_socket.sendall(http_response(message).encode('utf-8'))
+                             client_socket.close()
+                             clients.remove_client(client_socket) # remove the client from pending list.
                     else:
                        print("Not meaningful")
                        continue
@@ -380,11 +414,11 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                     if p.source == STATION_NAME:
                       if p.found == 1:
                         print("found: 1=>2")
-                        t = timetable.search_timetable(p.stations[1], p.starting_time) # check next station, in which starting_time is earlier than departure time
+                        t = timetable.search_timetable(p.destination, p.starting_time)
                         if t is None:
-                           p.times[0] = "99:99"
-                        else:
-                           p.times[0] = t[0]
+                           print("Timetable not found")
+                           continue
+                        p.times[0] = t[0]
                         p.found = 2
                         p.print_payload()
                       
@@ -415,6 +449,8 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       c = clients.find_client(q)
                       if c:
                         c.fd.sendall(http_resp.encode("utf-8"))
+                        clients.remove_client(c.fd)
+                        c.fd.close() # dont forget to close.
                       else:
                         continue
                       
@@ -431,13 +467,12 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                     elif p.found == 2:
                       cur = p.current
                       p.current += 1
-                      t = timetable.search_timetable(p.stations[cur], p.times[cur-1]) # check next stations, where departure time is later than arrival_time
+                      t = timetable.search_timetable(p.destination, p.times[cur-1])
                       if t is None:
-                         p.times[cur] = "99:99"
-                         p.routes[cur] = "NOTFOUND"
-                      else:
-                         p.times[cur] = t[3]
-                         p.routes[cur] = t[1]
+                         print("Timetable not found")
+                         continue
+                      p.times[cur] = t[0]
+                      p.routes[cur] = t[1]
                       message = p.serialize()
                       pattern = r'^(.*):(\d+)$'
                       match = re.match(pattern, p.addresses[p.current-1])
@@ -505,3 +540,4 @@ if __name__ == "__main__":
 
 
     run_server(IP_ADDRESS, TCP_PORT, UDP_PORT, timetable, neighbours, STATION_NAME)
+
