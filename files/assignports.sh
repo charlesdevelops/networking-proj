@@ -3,6 +3,7 @@
 # written by Chris.McDonald@uwa.edu.au
 
 MYSERVER="./station-server"
+# MYSERVER="python3 -m server"
 port="4000"
 
 # ---------------------------------------

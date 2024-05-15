@@ -100,8 +100,8 @@ int timeToMinutes(char *timeStr) {
 }
 
 int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_time, char *station_to_go){
-  for(int i = 0; i < NUM_TIMETABLES; i++) {
-    if(timeToMinutes(starting_time) > timeToMinutes(timetable[i].arrival_time)) continue;
+  for(int i = 0; i < NUM_TIMETABLES - 1; i++) {
+    if(timeToMinutes(starting_time) > timeToMinutes(timetable[i].departure_time)) continue;
     if(!strcmp(station_to_go, timetable[i].arrival_station))
       return i;
   }
