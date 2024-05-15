@@ -1,0 +1,63 @@
+#include "client.h"  // Assuming this header file includes the declarations
+
+void print_clients() {
+    CLIENT_NODE *current = head_client;
+    printf("Current clients:\n");
+    while (current) {
+        printf("FD: %d, Destination: %s, Time: %s\n", current->fd, current->query.destination, current->query.start_time);
+        current = current->next;
+    }
+}
+
+void print_queries() {
+    for (int i = 0; i < MAX_QUERIES; i++) {
+        printf("Query %d: Destination: %s, Time: %s\n", i, queries[i].destination, queries[i].start_time);
+    }
+}
+
+int main() {
+    // Initialize some queries
+    QUERY q1 = new_query();
+    strcpy(q1.destination, "New York");
+    strcpy(q1.start_time, "10:00");
+
+    QUERY q2 = new_query();
+    strcpy(q2.destination, "Los Angeles");
+    strcpy(q2.start_time, "12:00");
+
+    // Add queries
+    add_query(q1);
+    add_query(q2);
+
+    // Print queries
+    print_queries();
+
+    // Add clients
+    add_client(1, q1);
+    add_client(2, q2);
+
+    // Find and print clients
+    print_clients();
+
+    CLIENT_NODE *found_client = find_client(&q1);
+    if (found_client) {
+        printf("Found client FD: %d\n", found_client->fd);
+    } else {
+        printf("Client not found\n");
+    }
+
+    // Remove a client and print the list again
+    remove_client(1);
+    print_clients();
+
+    // Search for queries
+    QUERY *found_queries = search_query("New York", "10:00");
+    if (found_queries) {
+        printf("Found query: Destination: %s, Time: %s\n", found_queries[0].destination, found_queries[0].start_time);
+        free(found_queries);
+    } else {
+        printf("Query not found\n");
+    }
+
+    return 0;
+}

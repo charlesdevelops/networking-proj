@@ -1,7 +1,7 @@
 CC = cc
 CFLAGS = -Wall -Wextra
 TARGET = station-server
-SRC_DIR = . server timetable payload
+SRC_DIR = . server timetable payload client
 BUILD_DIR = build
 
 # List of source files

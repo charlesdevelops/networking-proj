@@ -11,7 +11,7 @@ StationC,115.8300,-31.7600
 06:03,busC_B,stopC,06:23,BusportB
 */
 
-typedef struct station {
+typedef struct station { 
   char station_name[MAX_NAME_LENGTH];
   char longitude[MAX_COORDINATE];
   char latitude[MAX_COORDINATE];
@@ -21,6 +21,7 @@ typedef struct neighbours {
   char ip_addr[INET6_ADDRSTRLEN];
   char udp_port[MAX_PORT];
   char addr_and_port[INET6_ADDRSTRLEN + MAX_PORT + 1];
+  char name[MAX_NAME_LENGTH];
 }NEIGHBOURS;
 
 typedef struct Timetable{
@@ -38,3 +39,5 @@ int readtimetable(char *timetable, STATION *Station, TIMETABLE **Station_Timetab
 int readneighbours(int argc, char **argv, NEIGHBOURS **neighbours);
 void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES);
 void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS);
+int timeToMinutes(char *timeStr);
+int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_time, char *station_to_go);
