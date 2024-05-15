@@ -156,8 +156,15 @@ class QueryManager:
     return None
 
 def time_to_minutes(time_str):
-    hours, minutes = map(int, time_str.split(':'))
-    return hours * 60 + minutes
+    # print("timestring being decoded: " + time_str + "\n")
+    if (":" in time_str):   
+        hours, minutes = map(int, time_str.split(':'))
+        return hours * 60 + minutes
+    elif ("%3A" in time_str):
+        hours, minutes = map(int, time_str.split('%3A'))
+        return hours * 60 + minutes
+    else:
+        return 0
 
 class Timetable:
     def __init__(self, filename):
@@ -250,19 +257,23 @@ def parse_query(query):
     # Regex pattern to match "GET /?to=someDestination&time=someTime HTTP/1.1"
     pattern2 = r"GET /\?to=([^ &]+)&time=([^ &]+) HTTP/1.1"
 
+    # Function to decode specific URL-encoded characters
+    def decode_url(encoded_string):
+        return encoded_string.replace("%3A", ":")
+
     # Try to match the first pattern
     match1 = re.match(pattern1, query)
     if match1:
-        destination = match1.group(1)
-        time = current_time() # Assuming 'current time' is a variable you've defined earlier
+        destination = decode_url(match1.group(1))
+        time = current_time()  # Assuming 'current_time' is a function you've defined earlier
         print(f"Using time: {time}")
         return (destination, time)
 
     # Try to match the second pattern
     match2 = re.match(pattern2, query)
     if match2:
-        destination = match2.group(1)
-        time = match2.group(2)
+        destination = decode_url(match2.group(1))
+        time = decode_url(match2.group(2))
         print(f"Using time: {time}")
         return (destination, time)
 
