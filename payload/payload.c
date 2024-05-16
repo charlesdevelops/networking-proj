@@ -2,7 +2,7 @@
 
 char* craft_payload(PAYLOAD p) {
     // This is the oversized malloc()ed payload, with this being able to support dynamically long payload of any size. 
-    char* payload = (char*)malloc((p.hops * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_TIMESTRING + MAX_NAME_LENGTH) + 2 * MAX_NAME_LENGTH) * sizeof(char));
+    char* payload = (char*)malloc((p.hops * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_TIMESTRING + MAX_NAME_LENGTH) + 2 * MAX_NAME_LENGTH + MAX_TIMESTRING) * sizeof(char));
     sprintf(payload, "%d %d %d", p.found, p.hops, p.current);
     for (int i = 0; i < p.hops; i++) {
         strcat(payload, " ");
@@ -27,6 +27,8 @@ char* craft_payload(PAYLOAD p) {
     strcat(payload, p.destination);
     strcat(payload, " ");
     strcat(payload, p.source);
+    strcat(payload, " ");
+    strcat(payload, p.start_time);
     strcat(payload, ";"); // end
     return payload;
 }
@@ -90,8 +92,10 @@ void load_payload(PAYLOAD *payload_struct, char* payload_string) {
     }
     token = strtok(NULL, " ");
     strcpy(payload_struct->destination, token);
-    token = strtok(NULL, ";");
+    token = strtok(NULL, " ");
     strcpy(payload_struct->source, token);
+    token = strtok(NULL, ";");
+    strcpy(payload_struct->start_time, token);
 
     free(payload_copy); // Free the copied string
 }
@@ -110,7 +114,12 @@ void print_payload(PAYLOAD payload_struct){
     }
     
     printf("Destination: %s\n", payload_struct.destination);
-    printf("Source: %s\n\n", payload_struct.source);
+    printf("Source: %s\n", payload_struct.source);
+    printf("Starting time: %s\n\n", payload_struct.start_time);
+}
+
+void get_ip_port(PAYLOAD payload_struct, char *ip, char *port, int which){
+  sscanf(payload_struct.address[which-1], "%45[^:]:%s", ip, port);
 }
 
 // int main() {

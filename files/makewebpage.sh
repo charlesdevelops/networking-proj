@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# written by Chris.McDonald@uwa.edu.au
+# written by Chris.McDonald@uwa.edu.au (and modified by us)
 # thanks to:  https://en.clipdealer.com/vector/media/A:112583666
 
 HOST="localhost"	# assuming all stations on the same host
@@ -78,13 +78,11 @@ THE_END
 	fi
     done < $TMP
 cat << THE_END
+  <input type="hidden" name="time" value="$LEAVE">
     </select></td>
     <td style="padding-left: 3em;"><input type="submit" value=" Let's go! "></td>
   </tr>
   </table>
-<!--
-  <input type="hidden" name="leave" value="$LEAVE">
--->
 </form>
 THE_END
     echo "</div>"
