@@ -112,3 +112,20 @@ Once, the payload got back to the source, with ``found == 1``, this time, we gon
 This time, ``found`` will be incremented, and the logic will work this way, whenever ``found == 2``, try to "what routes and departure-time to be updated". Since, neighbour can only know the port and IP address of its neighbour (NOT THE Station_Name). This might be the optimal solution.
 
 Once, everything is updated, and it hits the ``destination`` again, ``found == 3``, **FOUND EVERYTHING!**
+
+## UPDATE!
+The payload will also have starting_time as the last component, the rightmost!
+
+This is straightforward, and the times part can be made into 
+departure-time, arrival-time, arrival-time ..., last-arrival-time OR
+this can also work with:
+departure-time, departure-time, departure-time, departure-time, ..., departure-time, arrival-time
+
+## ERROR HANDLING, 
+
+Error handling is done using timeouts,
+so timeouts check the list of clients inside the ClientNode global variable,
+see if its still open, and if it is, check the request, see if it's been answered,
+if it has answer then send immediately, close the client socket, and remove it from list.
+if the request have not been answered yet, redo the smart flooding protocol.
+IF the clients not open, just remove it from client list.
