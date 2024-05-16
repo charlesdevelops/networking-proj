@@ -126,16 +126,15 @@ void check_update_timetable(char* file, TIMETABLE** Timetable, STATION *Station,
 
   double diff = difftime(f_time, latest);
   if (diff > 0) {
-        printf("%s is newer than %s\n", f_time, latest);
-    } else if (diff < 0) {
-        printf("%s is older than %s\n", f_time, latest);
+        printf("%s is newer than the current timetable\n", file);
         printf("Updating the file\n");
         readtimetable(file, Station, Timetable);
+    } else if (diff < 0) {
+        printf("%s is older than current timetable\n", file);
+        printf("Weird?\n");
     } else {
-        printf("%s and %s have the same modification time\n", f_time, latest);
+        printf("%s and the current timetable have the same modification time\n", file);
     }
-
-    return 0;
 }
 
 time_t get_file_mtime(const char *filepath) {

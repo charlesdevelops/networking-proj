@@ -81,7 +81,6 @@ int main(int argc, char **argv)
   fdmax = (UDP_fd > TCP_fd) ? UDP_fd : TCP_fd;
   struct timeval tv; // Timeout struct
   printf("fdmax: %d\n", fdmax);
-  struct timeval tv;
   while(1) {
     FD_ZERO(&read_fds);
     FD_SET(TCP_fd, &read_fds);

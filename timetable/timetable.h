@@ -4,6 +4,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "../macros/macros.h"
 /*
 # station-name,longitude,latitude
