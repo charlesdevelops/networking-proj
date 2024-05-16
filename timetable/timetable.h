@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <sys/stat.h>
 #include "../macros/macros.h"
 /*
 # station-name,longitude,latitude
@@ -41,3 +42,6 @@ void print_timetable(TIMETABLE *timetable, int NUM_TIMETABLES);
 void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS);
 int timeToMinutes(char *timeStr);
 int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_time, char *station_to_go);
+// check the timetable and update if necessary.
+void check_update_timetable(char* file, TIMETABLE** Timetable, STATION *Station, time_t latest);
+time_t get_file_mtime(const char *filepath);

@@ -60,6 +60,7 @@ int main(int argc, char **argv)
   printf("Current time is: %s\n", formatted_time);
 
   NUM_TIMETABLES = readtimetable(timetable_file, &Station, &Timetable);
+  time_t latest_time = get_file_mtime(timetable_file); // save the latest timetable
   NUM_NEIGHBOURS = readneighbours(argc, argv, &Neighbours);
 
   // print_timetable(Timetable, NUM_TIMETABLES);
@@ -88,6 +89,9 @@ int main(int argc, char **argv)
     tv.tv_sec = 15;
     tv.tv_usec = 0;
     printf("***\nBack to select\n\n");
+    // check if timetable is updated.
+    check_update_timetable(timetable_file, &Timetable, &Station, latest_time);
+  
     int retval = select(fdmax+1, &read_fds, NULL, NULL, &tv);
     if(retval == -1) {
         perror("select");

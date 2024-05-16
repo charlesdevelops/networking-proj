@@ -121,3 +121,32 @@ void print_neighbours(NEIGHBOURS *neighbours, int NUM_NEIGHBOURS){
   }
 }
 
+void check_update_timetable(char* file, TIMETABLE** Timetable, STATION *Station, time_t latest){
+  time_t f_time = get_file_mtime(file);
+
+  double diff = difftime(f_time, latest);
+  if (diff > 0) {
+        printf("%s is newer than %s\n", f_time, latest);
+    } else if (diff < 0) {
+        printf("%s is older than %s\n", f_time, latest);
+        printf("Updating the file\n");
+        readtimetable(file, Station, Timetable);
+    } else {
+        printf("%s and %s have the same modification time\n", f_time, latest);
+    }
+
+    return 0;
+}
+
+time_t get_file_mtime(const char *filepath) {
+    struct stat statbuf;
+
+    // Get the file statistics
+    if (stat(filepath, &statbuf) != 0) {
+        perror("Failed to get file statistics");
+        return -1;  // Return -1 to indicate error
+    }
+
+    // Return the modification time
+    return statbuf.st_mtime;
+}
