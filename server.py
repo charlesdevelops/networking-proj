@@ -205,13 +205,13 @@ class Timetable:
           return entry
         
       # search the timetable from 00:00 past midnight, considering the timetable stays the same the next day.
-      for entry in self.entries[1:]:
-        # departure-time,route-name,departing-from,arrival-time,arrival-station
-        # if the time is now earlier, then go to the next if.
-        print(entry)
-        if 0 > time_to_minutes(entry[0]): continue
-        if destination == entry[4]:
-          return entry
+      # for entry in self.entries[1:]:
+      #   # departure-time,route-name,departing-from,arrival-time,arrival-station
+      #   # if the time is now earlier, then go to the next if.
+      #   print(entry)
+      #   if 0 > time_to_minutes(entry[0]): continue
+      #   if destination == entry[4]:
+      #     return entry
       return None
       
 
@@ -310,6 +310,24 @@ Content-Type: text/html
 </html>
 """
 
+latest_time = None
+
+def update_file_mtime(filepath):
+    global latest_time
+    # Retrieve the modification time of the file
+    mtime = os.path.getmtime(filepath)
+    # Update the global variable
+    latest_time = mtime
+
+def check_and_update(filepath, timetable):
+   global latest_time
+   mtime = os.path.getmtime(filepath)
+   if mtime > latest_time:
+      print(f"{filepath} is newer, updating timetable...")
+      timetable = Timetable(filepath)
+   else:
+      print("Current timetable is the newest!")
+
 def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME):
     global tcp_socket, udp_socket
     tcp_socket = TCPSocket(ip_addr, tcp_port)
@@ -323,6 +341,8 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
         while True:
             # Wait for ready sockets
             print("Py: back to select\n")
+            filepath = "files/tt-" + STATION_NAME
+            check_and_update(filepath, timetable)
             
             read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 15)
             if not (read_sockets or exception_sockets):
@@ -442,7 +462,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                         print("found: 1=>2")
                         t = timetable.search_timetable(p.stations[1], p.starting_time) # check next station, in which starting_time is earlier than departure time
                         if t is None:
-                           continue
+                           p.times[0] = "99:99" # too late even for the first route
                         else:
                            p.times[0] = t[0]
                         p.found = 2
@@ -466,6 +486,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       else:
                          temp = Payload()
                          temp.deserialize(target_query.answers)
+                         # Update the answer to the newest
                          if time_to_minutes(temp.times[temp.hops-1]) > time_to_minutes(p.times[p.hops-1]):
                             target_query.answers = message
                         # if not, then it's already better route.
@@ -475,13 +496,10 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       c = clients.find_client(q)
                       if c:
                         c.fd.sendall(http_resp.encode("utf-8"))
+                        clients.remove_client(c.fd)
+                        c.fd.close()
                       else:
-                        continue
-                      
-                         
-                        
-                         
-                        
+                        continue # lost client or has been answered.
                     elif p.found == 3:
                       p.current -=1
                       message = p.serialize()
@@ -493,7 +511,8 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       p.current += 1
                       t = timetable.search_timetable(p.stations[cur], p.times[cur-1]) # check next stations, where departure time is later than arrival_time
                       if t is None:
-                         continue
+                         p.times[cur] = "99:99"
+                         p.routes[cur] = "NOTFOUND" # This will get replaced if there is a found route, see logic above.
                       else:
                          p.times[cur] = t[3]
                          p.routes[cur] = t[1]

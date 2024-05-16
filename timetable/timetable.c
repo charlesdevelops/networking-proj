@@ -106,12 +106,13 @@ int search_timetable(TIMETABLE *timetable, int NUM_TIMETABLES, char* starting_ti
       return i;
   }
   // if not found, search it again from "00:00" (PAST MIDNIGHT assuming the timetable is the same.)
-  for(int i = 0; i < NUM_TIMETABLES - 1; i++) {
-    // if(0 > timeToMinutes(timetable[i].departure_time)) continue; ALWAYS False, so skip.
-    // Find the first with the desired arrival_station
-    if(!strcmp(station_to_go, timetable[i].arrival_station))
-      return i;
-  }
+  // JUST AN IDEA! BUT NOT USED FOR THE PROJECT
+  // for(int i = 0; i < NUM_TIMETABLES - 1; i++) {
+  //   // if(0 > timeToMinutes(timetable[i].departure_time)) continue; ALWAYS False, so skip.
+  //   // Find the first with the desired arrival_station
+  //   if(!strcmp(station_to_go, timetable[i].arrival_station))
+  //     return i;
+  // }
   return -1;
 }
 
