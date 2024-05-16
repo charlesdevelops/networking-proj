@@ -24,6 +24,14 @@ TIMETABLE *Timetable;
 NEIGHBOURS *Neighbours;
 int NUM_NEIGHBOURS;
 int NUM_TIMETABLES;
+int TCP_fd, UDP_fd;
+
+void signal_handler(int sig) {
+    printf("Signal caught, closing sockets...: %d\n", sig);
+    close(TCP_fd);
+    close(UDP_fd);
+    exit(0);
+}
 
 int test_fd;
 int main(int argc, char **argv)
@@ -56,7 +64,6 @@ int main(int argc, char **argv)
 
   // print_timetable(Timetable, NUM_TIMETABLES);
   print_neighbours(Neighbours, NUM_NEIGHBOURS);
-  int TCP_fd, UDP_fd;
   fd_set read_fds;
   int fdmax; // max fd number
   char query[MAXDATASIZE];
@@ -66,7 +73,10 @@ int main(int argc, char **argv)
   setup_TCP(&TCP_fd, TCP_port);
   struct addrinfo *UDP_addrinfo = setup_UDP(&UDP_fd, UDP_port);
   struct sockaddr_in *addr_in = (struct sockaddr_in *)UDP_addrinfo->ai_addr;
-  printf("UDP Port: %d\n", ntohs(addr_in->sin_port));
+  printf("UDP Port: %d\n", ntohs(addr_in->sin_port)); // Check if ports the same
+
+  // Set signal handler
+  signal(SIGINT, signal_handler);
   fdmax = (UDP_fd > TCP_fd) ? UDP_fd : TCP_fd;
   struct timeval tv; // Timeout struct
   printf("fdmax: %d\n", fdmax);
@@ -154,6 +164,7 @@ int main(int argc, char **argv)
           print_payload(pload);
           printf("Start_Time: %s\n", pload.start_time);
           int which = search_timetable(Timetable, NUM_TIMETABLES, pload.start_time, pload.stations[current]);
+          if(which == -1) continue;
           strcpy(pload.time[0], Timetable[which].departure_time); // put the time the transport leaves
           printf("pload.time[0]: %s\n", pload.time[0]);
           print_payload(pload);
@@ -203,8 +214,14 @@ int main(int argc, char **argv)
           if(pload.found == 2){
             int current = pload.current;
             int which = search_timetable(Timetable, NUM_TIMETABLES, pload.time[current-1], pload.stations[current]);
-            strcpy(pload.time[current], Timetable[which].arrival_time);
-            strcpy(pload.routes[current], Timetable[which].route_name);
+            if (which == -1) {
+              // Unlikely to happen.
+              continue;
+            } 
+            else {
+              strcpy(pload.time[current], Timetable[which].arrival_time);
+              strcpy(pload.routes[current], Timetable[which].route_name);
+            }
             printf("Through %s on %s, and arrived at %s on %s", pload.routes[current], Timetable[which].departure_time, pload.stations[current], Timetable[which].arrival_time);
             get_ip_port(pload, target_ip, target_port, ++pload.current);
             char *payload_tosend = craft_payload(pload);
@@ -267,16 +284,22 @@ int main(int argc, char **argv)
       }
 
       char destination[61];
+      char buf[10];
       char time[MAX_TIMESTRING];
-      if (sscanf(query, "GET /?to=%s HTTP/1.1\n", destination) == 1) {
+      printf("***\n%s\n\n", query);
+      if(sscanf(query, "GET /?to=%[^&]&time=%5[^\n] HTTP/1.1\n", destination, buf) == 2) {
+        char hours[3], minutes[3];
+        // invalid time format?! use the current time
+        // ':' -> "%3A in WEB HTTP Protocol"
+        if(sscanf(buf, "%s%%3A%s", hours, minutes) != 2) strcpy(time, formatted_time);
+        else sprintf(time, "%s:%s", hours, minutes);
+        printf("%s %s", hours, minutes);
+        printf("Using time: ZZ %s\n", time);
+      } else if (sscanf(query, "GET /?to=%[^&] HTTP/1.1\n", destination) == 1) {
         strcpy(time, formatted_time); // use the current time
         printf("Using time: %s\n", time);
       }
-      else if(sscanf(query, "GET /?to=%s&time=%s HTTP/1.1\n", destination, time) == 1) {
-        printf("Using time: %s\n", time);
-      }
       else {continue;} // not meaningful
-      strcpy(time, "10:00");
             // tell browser to wait
       response = calloc(strlen(HTTP_200_RESPONSE) + strlen(HTML_200_MESSAGE) + 5, sizeof(char));
 
@@ -303,8 +326,10 @@ int main(int argc, char **argv)
         strcpy(new_q.start_time, time);
         strcpy(new_q.destination, destination);
         add_query(new_q);
+        remove_client(new_fd);
         add_client(new_fd, new_q);
       } else {
+        remove_client(new_fd);
         add_client(new_fd, (*q));
       }
       
