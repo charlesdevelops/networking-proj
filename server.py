@@ -286,7 +286,7 @@ def parse_query(query):
     match1 = re.match(pattern1, query)
     if match1:
         destination = decode_url(match1.group(1))
-        destination = decode_url2(destination)
+        # destination = decode_url2(destination)
         time = current_time()  # Assuming 'current_time' is a function you've defined earlier
         print(f"Using time: {time}")
         return (destination, time)
