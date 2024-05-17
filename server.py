@@ -1,3 +1,6 @@
+# STUDENT_1 ID = 23262455 (Harry Komah)
+# STUDENT_2 ID = 23196696 (Charles Aidan Watson)
+
 import socket
 import struct
 import select

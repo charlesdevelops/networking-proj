@@ -150,7 +150,7 @@ int main(int argc, char **argv)
                     char *payload_tosend = (char *)malloc((3 * sizeof(int)) + sizeof(char) * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_NAME_LENGTH + MAX_TIMESTRING) + (2 * MAX_NAME_LENGTH));
                     sprintf(payload_tosend, "0 0 0 %s %s %s;", current->query.destination,Station.station_name,current->query.start_time);
                     printf("%s\n", payload_tosend);
-                    talk_to(local_ip, UDP_port, payload_tosend);  // You will need to adjust this to fit your network communication logic
+                    talk_to("localhost", UDP_port, payload_tosend);  // You will need to adjust this to fit your network communication logic
                 }
             } else {
                 close(current->fd);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
           pload.found = 1;
           int hops = pload.hops;
 
-          sprintf(pload.address[hops], "%s:%s", local_ip, UDP_port); // unless there's port forwarding, stick with localhost.
+          sprintf(pload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
           strcpy(pload.stations[hops], Station.station_name);
           strcpy(pload.routes[hops], Timetable[0].route_name);
           strcpy(pload.time[hops], Timetable[0].arrival_time);
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
               printf("not found yet\n");
               int hops = pload.hops;
               // update the payload.
-              sprintf(pload.address[hops], "%s:%s", local_ip, UDP_port); // unless there's port forwarding, stick with localhost.
+              sprintf(pload.address[hops], "%s:%s", "localhost", UDP_port); // unless there's port forwarding, stick with localhost.
               strcpy(pload.stations[hops], Station.station_name);
               strcpy(pload.routes[hops], "...");
               strcpy(pload.time[hops], "...");
@@ -403,7 +403,7 @@ int main(int argc, char **argv)
       char *payload_tosend = (char *)malloc((3 * sizeof(int)) + sizeof(char) * (MAX_NAME_LENGTH + MAX_PORT + INET6_ADDRSTRLEN + 1 + MAX_NAME_LENGTH + MAX_TIMESTRING) + (2 * MAX_NAME_LENGTH));
       sprintf(payload_tosend, "0 0 0 %s %s %s;", destination,Station.station_name,time);
       printf("%s\n", payload_tosend);
-      // talk_to(local_ip, UDP_port, payload_tosend);
+      // talk_to("localhost", UDP_port, payload_tosend);
       free(payload_tosend);
     }
   }
