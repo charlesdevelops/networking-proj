@@ -167,8 +167,8 @@ def time_to_minutes(time_str):
     if (":" in time_str):   
         hours, minutes = map(int, time_str.split(':'))
         return hours * 60 + minutes
-    elif ("%3A" in time_str):
-        hours, minutes = map(int, time_str.split('%3A'))
+    elif ("-" in time_str):
+        hours, minutes = map(int, time_str.split('-'))
         return hours * 60 + minutes
     else:
         return 0
@@ -275,7 +275,7 @@ def parse_query(query):
 
     # Function to decode specific URL-encoded characters
     def decode_url(encoded_string):
-        return encoded_string.replace("%3A", ":")
+        return encoded_string.replace("-", ":")
 
     # Try to match the first pattern
     match1 = re.match(pattern1, query)

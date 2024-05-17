@@ -167,8 +167,13 @@ int main(int argc, char **argv)
           print_payload(pload);
           printf("Start_Time: %s\n", pload.start_time);
           int which = search_timetable(Timetable, NUM_TIMETABLES, pload.start_time, pload.stations[current]);
-          if(which == -1) continue;
-          strcpy(pload.time[0], Timetable[which].departure_time); // put the time the transport leaves
+          if(which == -1) {
+            strcpy(pload.time[0], "99:99");
+          } else {
+            strcpy(pload.time[0], Timetable[which].departure_time); // put the time the transport leaves
+          }
+
+          
           printf("pload.time[0]: %s\n", pload.time[0]);
           print_payload(pload);
           
@@ -218,8 +223,9 @@ int main(int argc, char **argv)
             int current = pload.current;
             int which = search_timetable(Timetable, NUM_TIMETABLES, pload.time[current-1], pload.stations[current]);
             if (which == -1) {
-              // Unlikely to happen.
-              continue;
+              strcpy(pload.time[current], "99:99");
+              strcpy(pload.routes[current], "NOTFOUND");
+              
             } 
             else {
               strcpy(pload.time[current], Timetable[which].arrival_time);
@@ -294,13 +300,15 @@ int main(int argc, char **argv)
         char hours[3], minutes[3];
         // invalid time format?! use the current time
         // ':' -> "%3A in WEB HTTP Protocol"
-        if(sscanf(buf, "%s%%3A%s", hours, minutes) != 2) strcpy(time, formatted_time);
+        // If it does not work, change to sscanf(buf, "%s?%s", hours, minutes)
+        
+        if(sscanf(buf, "%2[0-9]-%2[0-9]", hours, minutes) != 2) strcpy(time, formatted_time);
         else sprintf(time, "%s:%s", hours, minutes);
         printf("%s %s", hours, minutes);
-        printf("Using time: ZZ %s\n", time);
+        printf("Using time: %s\n", time);
       } else if (sscanf(query, "GET /?to=%[^&] HTTP/1.1\n", destination) == 1) {
         strcpy(time, formatted_time); // use the current time
-        printf("Using time: %s\n", time);
+        printf("Using current time: %s\n", time);
       }
       else {continue;} // not meaningful
             // tell browser to wait
