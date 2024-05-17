@@ -1,3 +1,6 @@
+# STUDENT_1 ID = 23262455 (Harry Komah)
+# STUDENT_2 ID = 23196696 (Charles Aidan Watson)
+
 import socket
 import struct
 import select
@@ -6,6 +9,17 @@ import re
 import fcntl
 import os
 import time
+import signal
+
+tcp_socket = None
+udp_socket = None
+def signal_handler(sig, frame):
+    print('Signal caught, closing sockets...')
+    if tcp_socket:
+        tcp_socket.close()
+    if udp_socket:
+        udp_socket.close()
+    sys.exit(0)
 
 def current_time():
     # Get current time as a struct_time object
@@ -67,8 +81,8 @@ class Payload:
             self.stations.append(new_station)
             self.addresses.append(new_address)
             # Placeholder for the other fields
-            self.routes.append("New_Route")
-            self.times.append("New_Time")
+            self.routes.append("...")
+            self.times.append("...")
         elif self.found == 1:
             # Implement backtrace logic
             self.current -= 1  # decrement current to simulate backtrace
@@ -125,14 +139,12 @@ class ClientList:
     return None
   
   def remove_client(self, fd):
+    prev = None
     current = self.head
     while current is not None:
       if current.fd == fd:
-        if prev:
-          prev.next = current.next
-        else:
-          self.head = current.next
-        return
+        if prev != None:
+            prev.next = current.next
       prev = current
       current = current.next
 
@@ -156,8 +168,15 @@ class QueryManager:
     return None
 
 def time_to_minutes(time_str):
-    hours, minutes = map(int, time_str.split(':'))
-    return hours * 60 + minutes
+    # print("timestring being decoded: " + time_str + "\n")
+    if (":" in time_str):   
+        hours, minutes = map(int, time_str.split(':'))
+        return hours * 60 + minutes
+    elif ("-" in time_str):
+        hours, minutes = map(int, time_str.split('-'))
+        return hours * 60 + minutes
+    else:
+        return 0
 
 class Timetable:
     def __init__(self, filename):
@@ -185,9 +204,19 @@ class Timetable:
       for entry in self.entries[1:]:
         # departure-time,route-name,departing-from,arrival-time,arrival-station
         # if the time is now earlier, then go to the next if.
+        print(entry)
         if time_to_minutes(time_earlier) > time_to_minutes(entry[0]): continue
         if destination == entry[4]:
           return entry
+        
+      # search the timetable from 00:00 past midnight, considering the timetable stays the same the next day.
+      # for entry in self.entries[1:]:
+      #   # departure-time,route-name,departing-from,arrival-time,arrival-station
+      #   # if the time is now earlier, then go to the next if.
+      #   print(entry)
+      #   if 0 > time_to_minutes(entry[0]): continue
+      #   if destination == entry[4]:
+      #     return entry
       return None
       
 
@@ -249,19 +278,27 @@ def parse_query(query):
     # Regex pattern to match "GET /?to=someDestination&time=someTime HTTP/1.1"
     pattern2 = r"GET /\?to=([^ &]+)&time=([^ &]+) HTTP/1.1"
 
+    # Function to decode specific URL-encoded characters
+    def decode_url(encoded_string):
+        return encoded_string.replace("-", ":")
+
+    def decode_url_2(encoded_string):
+        return encoded_string.replace("%3A", ":")
+
     # Try to match the first pattern
     match1 = re.match(pattern1, query)
     if match1:
-        destination = match1.group(1)
-        time = current_time() # Assuming 'current time' is a variable you've defined earlier
+        destination = decode_url(match1.group(1))
+        # destination = decode_url2(destination)
+        time = current_time()  # Assuming 'current_time' is a function you've defined earlier
         print(f"Using time: {time}")
         return (destination, time)
 
     # Try to match the second pattern
     match2 = re.match(pattern2, query)
     if match2:
-        destination = match2.group(1)
-        time = match2.group(2)
+        destination = decode_url(match2.group(1))
+        time = decode_url(match2.group(2))
         print(f"Using time: {time}")
         return (destination, time)
 
@@ -282,7 +319,26 @@ Content-Type: text/html
 </html>
 """
 
+latest_time = None
+
+def update_file_mtime(filepath):
+    global latest_time
+    # Retrieve the modification time of the file
+    mtime = os.path.getmtime(filepath)
+    # Update the global variable
+    latest_time = mtime
+
+def check_and_update(filepath, timetable):
+   global latest_time
+   mtime = os.path.getmtime(filepath)
+   if mtime > latest_time:
+      print(f"{filepath} is newer, updating timetable...")
+      timetable = Timetable(filepath)
+   else:
+      print("Current timetable is the newest!")
+
 def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME):
+    global tcp_socket, udp_socket
     tcp_socket = TCPSocket(ip_addr, tcp_port)
     udp_socket = UDPSocket(ip_addr, udp_port)
 
@@ -294,13 +350,10 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
         while True:
             # Wait for ready sockets
             print("Py: back to select\n")
+            filepath = "files/tt-" + STATION_NAME
+            check_and_update(filepath, timetable)
             
-            read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 1)
-            # TIMEOUT per 1 SECONDS, and the protocol the address the yet received packet by
-            # checking those clients list (see if there is really any connection or there has been but not closed and answered yet)
-            # Lastly, if there is any clients, check its query, if its already inside the query list with answer, then immediately
-            # sendall the answer and close the clients
-            # If not just do the flooding by UDP send_to, to our own UDP server.
+            read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list, 15)
             if not (read_sockets or exception_sockets):
               current = clients.head
               while current is not None:
@@ -312,8 +365,14 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                  
                  if q is not None:
                     if q.answers is not None:
-                      current.fd.sendall(http_response(q.answers).encode('utf-8'))
-                      current.fd.close()
+                        try:
+                            if client_socket.fileno() != -1:
+                              current.fd.sendall(http_response(q.answers).encode('utf-8'))
+                        except Exception:
+                            pass
+                        finally:
+                            clients.remove_client(current.fd)
+                            current.fd.close()
                     else:
                        init_payload = Payload(
                         destination=q.destination,
@@ -370,6 +429,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                         starting_time=q.start_time
                        )
                        same_query = queries.search_query(dest, tm)
+                       clients.remove_client(client_socket) # Make sure no duplicates, remove and adding it again.
                        if same_query is None:
                           clients.add_client(client_socket, q)
                           queries.add_query(q)  
@@ -380,15 +440,20 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                           if same_query.answers == None:
                              message = init_payload.serialize()
                              print("query has been asked before, but no answer yet. Asking...")
+                             clients.add_client(client_socket, q)
                              udp_socket.send_to(message, "localhost", udp_port)
                           else:
                              print("Query has been asked before, sending the fastest route")
-                             message = init_payload.serialize()
-                             client_socket.sendall(http_response(message).encode('utf-8'))
-                             client_socket.close()
-                             clients.remove_client(client_socket) # remove the client from pending list.
+                             try:
+                                 if client_socket.fileno() != -1:
+                                  client_socket.sendall(http_response(message).encode('utf-8'))
+                             except Exception:
+                                 pass
+                             finally:
+                                 client_socket.close()
                     else:
-                       print("Not meaningful")
+                       print("Not meaningful") # Browser might send some unnecessary stuffs.
+                       # Don't close it otherwise the previous meaningful request get lost.
                        continue
 
                 elif notified_socket == udp_socket.socket:
@@ -414,11 +479,11 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                     if p.source == STATION_NAME:
                       if p.found == 1:
                         print("found: 1=>2")
-                        t = timetable.search_timetable(p.destination, p.starting_time)
+                        t = timetable.search_timetable(p.stations[1], p.starting_time) # check next station, in which starting_time is earlier than departure time
                         if t is None:
-                           print("Timetable not found")
-                           continue
-                        p.times[0] = t[0]
+                           p.times[0] = "99:99" # too late even for the first route
+                        else:
+                           p.times[0] = t[0]
                         p.found = 2
                         p.print_payload()
                       
@@ -440,6 +505,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       else:
                          temp = Payload()
                          temp.deserialize(target_query.answers)
+                         # Update the answer to the newest
                          if time_to_minutes(temp.times[temp.hops-1]) > time_to_minutes(p.times[p.hops-1]):
                             target_query.answers = message
                         # if not, then it's already better route.
@@ -448,16 +514,17 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       http_resp = http_response(target_query.answers)
                       c = clients.find_client(q)
                       if c:
-                        c.fd.sendall(http_resp.encode("utf-8"))
-                        clients.remove_client(c.fd)
-                        c.fd.close() # dont forget to close.
+                        try:
+                            if c.fd.fileno() != -1:
+                              c.fd.sendall(http_resp.encode("utf-8"))
+                        except OSError as e:
+                            # Handle the OSError
+                            print(f"An OSError occurred: {e}")
+                        finally:
+                            clients.remove_client(c.fd)
+                            c.fd.close()
                       else:
-                        continue
-                      
-                         
-                        
-                         
-                        
+                        continue # lost client or has been answered.
                     elif p.found == 3:
                       p.current -=1
                       message = p.serialize()
@@ -467,12 +534,13 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                     elif p.found == 2:
                       cur = p.current
                       p.current += 1
-                      t = timetable.search_timetable(p.destination, p.times[cur-1])
+                      t = timetable.search_timetable(p.stations[cur], p.times[cur-1]) # check next stations, where departure time is later than arrival_time
                       if t is None:
-                         print("Timetable not found")
-                         continue
-                      p.times[cur] = t[0]
-                      p.routes[cur] = t[1]
+                         p.times[cur] = "99:99"
+                         p.routes[cur] = "NOTFOUND" # This will get replaced if there is a found route, see logic above.
+                      else:
+                         p.times[cur] = t[3]
+                         p.routes[cur] = t[1]
                       message = p.serialize()
                       pattern = r'^(.*):(\d+)$'
                       match = re.match(pattern, p.addresses[p.current-1])
@@ -516,6 +584,9 @@ if __name__ == "__main__":
     STATION_NAME = sys.argv[1]
     TCP_PORT = int(sys.argv[2])
     UDP_PORT = int(sys.argv[3])
+    
+    # Signal handler.
+    signal.signal(signal.SIGINT, signal_handler)
 
     neighbours = []
     # Parse additional neighbour arguments
@@ -532,6 +603,7 @@ if __name__ == "__main__":
 
     filename = "files/tt-" + STATION_NAME
     timetable = Timetable(filename)
+    update_file_mtime(filename)
     timetable.print_timetable()
     print("Neighbours:")
     print(len(neighbours))
@@ -540,4 +612,3 @@ if __name__ == "__main__":
 
 
     run_server(IP_ADDRESS, TCP_PORT, UDP_PORT, timetable, neighbours, STATION_NAME)
-

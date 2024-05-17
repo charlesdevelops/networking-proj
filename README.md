@@ -1,5 +1,6 @@
 Details can be found [here](https://teaching.csse.uwa.edu.au/units/CITS3002/project2024/index.php)
 
+
 # Socket
 
 ## SOCK_STREAM
@@ -40,6 +41,33 @@ shell>  ./makewebpage.sh startstations.sh mywebpage.html
 ```
 More infos on [Link](https://teaching.csse.uwa.edu.au/units/CITS3002/project2024/getting-started.php)
 
+## RUN THE PROGRAM
+To run the program for python, the file is "server.py"
+``
+python -m server <TCP> <UDP> neighbour:port neighbour:port ...
+``
+
+To run the program for C, the file is "main.c" with the assortments of modules giving modularity and readability to the C structure.
+``
+make clean
+make
+./station-server <TCP> <UDP> neighbour:port neighbour:port ...
+``
+For the HTTP request,
+``
+the query part has been decided to be something like:
+"http://localhost:4007/?to=BusportC&time=08-39"
+``
+
+More info about the program, the TCP server will bind to "127.0.0.1", and the UDP server will get the local ip "172.24.118.122".
+The way local ip can be earned is by trying to connect to external server, this way we look at what our external ip (local ip) is.
+
+## LOCAL IP
+In networking, when a device wants to determine its local IP address (i.e., the IP address assigned to it within the local network), it often relies on methods such as querying external servers or services. This is because the local IP address is usually assigned dynamically by a DHCP server on the local network.
+
+One common method to determine the local IP address is to establish a connection with an external server and inspect the source IP address of the outgoing connection. This source IP address corresponds to the local IP address of the device.
+
+However, keep in mind that the accuracy of this method may depend on various factors, such as the network configuration and the availability of external servers. Additionally, relying on external services for local network information may introduce dependencies and potential points of failure in your application
 ## The **PROTOCOL** and PAYLOAD struct
 IMPORTANT: Both python and c program should use the same string format when sending UDP protocol (communicating with neighbours).
 In C:
@@ -129,3 +157,6 @@ see if its still open, and if it is, check the request, see if it's been answere
 if it has answer then send immediately, close the client socket, and remove it from list.
 if the request have not been answered yet, redo the smart flooding protocol.
 IF the clients not open, just remove it from client list.
+
+## More on Error Handling,
+In python, a lots of ``try ... except ... finally`` can be done, but usually by catching the exception, the program can go awry. In this case, when trying to reply to client browser, bad file descriptor error might happen, and if you put in under ``try ... except ..``. the eternal loop might happen unless you give ``try ... except pass``. But a simple fileno() checking, a low level function can save the program.

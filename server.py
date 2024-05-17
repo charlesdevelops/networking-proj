@@ -337,11 +337,25 @@ def check_and_update(filepath, timetable):
    else:
       print("Current timetable is the newest!")
 
+def get_local_ip():
+    # Create a temporary socket to determine the local IP address
+    # This socket does not actually establish a connection
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            # Connect to a public DNS server (Google's)
+            # This is used to find the "external" IP on the connected network
+            # No actual traffic is sent
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+        except Exception:
+            ip = "127.0.0.1"  # Default to localhost if unable to determine
+    return ip
+
 def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME):
     global tcp_socket, udp_socket
     tcp_socket = TCPSocket(ip_addr, tcp_port)
-    udp_socket = UDPSocket(ip_addr, udp_port)
-
+    udp_socket = UDPSocket(get_local_ip(), udp_port)
+    local_ip = get_local_ip()
     sockets_list = [tcp_socket.socket, udp_socket.socket]
     queries = QueryManager()
     clients = ClientList()
@@ -366,9 +380,10 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                  if q is not None:
                     if q.answers is not None:
                         try:
-                            current.fd.sendall(http_response(q.answers).encode('utf-8'))
+                            if client_socket.fileno() != -1:
+                              current.fd.sendall(http_response(q.answers).encode('utf-8'))
                         except Exception:
-                            print("bad file descriptor")
+                            pass
                         finally:
                             clients.remove_client(current.fd)
                             current.fd.close()
@@ -379,14 +394,14 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                         starting_time=q.start_time
                        )
                        message = init_payload.serialize()
-                       udp_socket.send_to(message, "localhost", udp_port)
+                       udp_socket.send_to(message, local_ip, udp_port)
                  else:
                     # queries are asked but not put in the list
                     queries.add_query(current.query)
                     qu = current.query
                     new_p = Payload(destination=qu.destination, source=STATION_NAME, starting_time=qu.start_time)
                     message = new_p.serialize()
-                    udp_socket.send_to(message, "localhost", udp_port)
+                    udp_socket.send_to(message,  local_ip, udp_port)
               continue
 
             for notified_socket in read_sockets:
@@ -434,19 +449,20 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                           queries.add_query(q)  
                           message = init_payload.serialize()
                           print(message)
-                          udp_socket.send_to(message, "localhost", udp_port)
+                          udp_socket.send_to(message, local_ip, udp_port)
                        else:
                           if same_query.answers == None:
                              message = init_payload.serialize()
                              print("query has been asked before, but no answer yet. Asking...")
                              clients.add_client(client_socket, q)
-                             udp_socket.send_to(message, "localhost", udp_port)
+                             udp_socket.send_to(message, local_ip, udp_port)
                           else:
                              print("Query has been asked before, sending the fastest route")
                              try:
-                                 client_socket.sendall(http_response(message).encode('utf-8'))
+                                 if client_socket.fileno() != -1:
+                                  client_socket.sendall(http_response(message).encode('utf-8'))
                              except Exception:
-                                 print("Might be a bad file descriptor")
+                                 pass
                              finally:
                                  client_socket.close()
                     else:
@@ -465,7 +481,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                     if p.destination == STATION_NAME:
                       if p.found == 0:
                         print("found: 0=>1")
-                        p.update_on_arrival(STATION_NAME, "localhost:" + str(udp_port))
+                        p.update_on_arrival(STATION_NAME, f"{local_ip}:" + str(udp_port))
                         p.found = 1
                         p.print_payload()
                       
@@ -513,7 +529,8 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       c = clients.find_client(q)
                       if c:
                         try:
-                            c.fd.sendall(http_resp.encode("utf-8"))
+                            if c.fd.fileno() != -1:
+                              c.fd.sendall(http_resp.encode("utf-8"))
                         except OSError as e:
                             # Handle the OSError
                             print(f"An OSError occurred: {e}")
@@ -550,7 +567,7 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       match = re.match(pattern, p.addresses[p.current-1])
                       udp_socket.send_to(message, match.group(1), int(match.group(2)))
                     else:
-                      p.update_on_arrival(STATION_NAME, "localhost:" + str(udp_port))
+                      p.update_on_arrival(STATION_NAME, f"{local_ip}:" + str(udp_port))
                       message = p.serialize()
                       print(message)
                       for n in neighbours:
