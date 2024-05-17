@@ -4,7 +4,7 @@
 # thanks to:  https://en.clipdealer.com/vector/media/A:112583666
 
 HOST="localhost"	# assuming all stations on the same host
-LEAVE=`date '+%H:%M'`	# or set to a fixed value
+LEAVE=`date '+%H-%M'`	# or set to a fixed value
 
 # ---------------------------------------
 
