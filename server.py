@@ -136,10 +136,12 @@ class ClientList:
     return None
   
   def remove_client(self, fd):
+    prev = None
     current = self.head
     while current is not None:
       if current.fd == fd:
-        prev.next = current.next
+        if prev != None:
+            prev.next = current.next
       prev = current
       current = current.next
 
@@ -277,10 +279,14 @@ def parse_query(query):
     def decode_url(encoded_string):
         return encoded_string.replace("-", ":")
 
+    def decode_url_2(encoded_string):
+        return encoded_string.replace("%3A", ":")
+
     # Try to match the first pattern
     match1 = re.match(pattern1, query)
     if match1:
         destination = decode_url(match1.group(1))
+        destination = decode_url2(destination)
         time = current_time()  # Assuming 'current_time' is a function you've defined earlier
         print(f"Using time: {time}")
         return (destination, time)
@@ -356,9 +362,13 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                  
                  if q is not None:
                     if q.answers is not None:
-                      current.fd.sendall(http_response(q.answers).encode('utf-8'))
-                      clients.remove_client(current.fd)
-                      current.fd.close()
+                        try:
+                            current.fd.sendall(http_response(q.answers).encode('utf-8'))
+                        except Exception:
+                            print("bad file descriptor")
+                        finally:
+                            clients.remove_client(current.fd)
+                            current.fd.close()
                     else:
                        init_payload = Payload(
                         destination=q.destination,
@@ -430,8 +440,12 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                              udp_socket.send_to(message, "localhost", udp_port)
                           else:
                              print("Query has been asked before, sending the fastest route")
-                             client_socket.sendall(http_response(message).encode('utf-8'))
-                             client_socket.close()
+                             try:
+                                 client_socket.sendall(http_response(message).encode('utf-8'))
+                             except Exception:
+                                 print("Might be a bad file descriptor")
+                             finally:
+                                 client_socket.close()
                     else:
                        print("Not meaningful") # Browser might send some unnecessary stuffs.
                        # Don't close it otherwise the previous meaningful request get lost.
@@ -495,9 +509,14 @@ def run_server(ip_addr, tcp_port, udp_port, timetable, neighbours, STATION_NAME)
                       http_resp = http_response(target_query.answers)
                       c = clients.find_client(q)
                       if c:
-                        c.fd.sendall(http_resp.encode("utf-8"))
-                        clients.remove_client(c.fd)
-                        c.fd.close()
+                        try:
+                            c.fd.sendall(http_resp.encode("utf-8"))
+                        except OSError as e:
+                            # Handle the OSError
+                            print(f"An OSError occurred: {e}")
+                        finally:
+                            clients.remove_client(c.fd)
+                            c.fd.close()
                       else:
                         continue # lost client or has been answered.
                     elif p.found == 3:
@@ -578,6 +597,7 @@ if __name__ == "__main__":
 
     filename = "files/tt-" + STATION_NAME
     timetable = Timetable(filename)
+    update_file_mtime(filename)
     timetable.print_timetable()
     print("Neighbours:")
     print(len(neighbours))
