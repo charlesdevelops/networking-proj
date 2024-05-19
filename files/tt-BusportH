@@ -1,0 +1,17 @@
+# station-name,longitude,latitude
+BusportH,115.9100,-31.8500
+# departure-time,route-name,departing-from,arrival-time,arrival-station
+06:01,busH_S,stopH,06:19,JunctionS
+07:08,busH_S,stopH,07:26,JunctionS
+08:16,busH_S,stopH,08:32,JunctionS
+09:21,busH_S,stopH,09:39,JunctionS
+10:25,busH_S,stopH,10:43,JunctionS
+11:29,busH_S,stopH,11:46,JunctionS
+12:36,busH_S,stopH,12:53,JunctionS
+13:39,busH_S,stopH,13:55,JunctionS
+14:42,busH_S,stopH,14:59,JunctionS
+15:45,busH_S,stopH,16:02,JunctionS
+16:50,busH_S,stopH,17:08,JunctionS
+17:54,busH_S,stopH,18:10,JunctionS
+18:58,busH_S,stopH,19:15,JunctionS
+20:04,busH_S,stopH,20:21,JunctionS

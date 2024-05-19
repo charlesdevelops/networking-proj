@@ -1,0 +1,29 @@
+# station-name,longitude,latitude
+BusportL,115.9700,-31.7400
+# departure-time,route-name,departing-from,arrival-time,arrival-station
+06:02,busL_B,stopL,06:14,TerminalB
+06:35,busL_A,stopL,07:04,StationA
+07:08,busL_B,stopL,07:21,TerminalB
+07:44,busL_A,stopL,08:15,StationA
+08:18,busL_B,stopL,08:30,TerminalB
+08:52,busL_B,stopL,09:04,TerminalB
+09:27,busL_B,stopL,09:40,TerminalB
+10:04,busL_B,stopL,10:17,TerminalB
+10:39,busL_B,stopL,10:51,TerminalB
+11:15,busL_A,stopL,11:44,StationA
+11:47,busL_B,stopL,12:00,TerminalB
+12:24,busL_B,stopL,12:36,TerminalB
+12:56,busL_A,stopL,13:26,StationA
+13:33,busL_A,stopL,14:03,StationA
+14:06,busL_A,stopL,14:37,StationA
+14:40,busL_B,stopL,14:53,TerminalB
+15:17,busL_A,stopL,15:47,StationA
+15:50,busL_A,stopL,16:19,StationA
+16:23,busL_A,stopL,16:53,StationA
+17:00,busL_A,stopL,17:30,StationA
+17:34,busL_A,stopL,18:04,StationA
+18:09,busL_B,stopL,18:23,TerminalB
+18:43,busL_B,stopL,18:57,TerminalB
+19:18,busL_A,stopL,19:48,StationA
+19:54,busL_A,stopL,20:25,StationA
+20:31,busL_A,stopL,21:02,StationA
