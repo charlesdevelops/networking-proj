@@ -1,3 +1,7 @@
+## AUTHORS
+Student 1: Harry Komah 23262455
+Student 2: Charles Aidan Watson 23196696
+
 Details can be found [here](https://teaching.csse.uwa.edu.au/units/CITS3002/project2024/index.php)
 
 
